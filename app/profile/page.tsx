@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import Navbar from "../components/navbar";
 import Footer from "../components/footer";
+import AuthGuard from "../utils/authGuard";
 
 const ProfilePage = () => {
   const [profileData, setProfileData] = useState({
@@ -25,7 +26,7 @@ const ProfilePage = () => {
   };
 
   return (
-    <>
+    <AuthGuard>
       <Navbar />
       <div className="min-h-screen bg-gray-900 text-white p-6 flex justify-center">
         <div className="w-full max-w-3xl bg-gray-800 p-8 rounded-lg shadow-lg">
@@ -161,7 +162,7 @@ const ProfilePage = () => {
         </div>
       </div>
       <Footer />
-    </>
+    </AuthGuard>
   );
 };
 

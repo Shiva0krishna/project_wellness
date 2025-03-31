@@ -1,13 +1,14 @@
+"use client";
 import AuthGuard from "../utils/authGuard";
 
-const TrackActivity = () => {
+const Assistant = () => {
   return (
     <AuthGuard>
       <div>
-        {/* Track activity content */}
+        {/* Assistant content */}
       </div>
     </AuthGuard>
   );
 };
 
-export default TrackActivity;
+export default Assistant;

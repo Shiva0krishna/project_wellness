@@ -1,11 +1,25 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link"; // Import Link from Next.js
 import { Menu, X } from "lucide-react";
-import { div, span } from "framer-motion/client";
+import { supabase } from "../utils/supabaseClient";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (session) {
+        setUser(session.user);
+      }
+    };
+
+    fetchUser();
+  }, []);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -34,7 +48,7 @@ const Navbar = () => {
             </span>
           </Link>
           <Link
-            href="/assistance"
+            href="/assistant"
             className="group flex items-center gap-2 text-gray-400 hover:text-white transition-colors relative"
           >
             <span className="relative">
@@ -52,15 +66,6 @@ const Navbar = () => {
             </span>
           </Link>
           <Link
-            href="/"
-            className="group flex items-center gap-2 text-gray-400 hover:text-white transition-colors relative"
-          >
-            <span className="relative">
-              
-              <span className="absolute -bottom-1 left-0 w-full h-px bg-violet-400 transform scale-x-0 transition-transform duration-300 origin-left group-hover:scale-x-100" />
-            </span>
-          </Link>
-          <Link
             href="/browse"
             className="group flex items-center gap-2 text-gray-400 hover:text-white transition-colors relative"
           >
@@ -69,19 +74,37 @@ const Navbar = () => {
               <span className="absolute -bottom-1 left-0 w-full h-px bg-violet-400 transform scale-x-0 transition-transform duration-300 origin-left group-hover:scale-x-100" />
             </span>
           </Link>
-            <Link
+          <Link
             href="/profile"
             className="group flex items-center gap-2 text-gray-400 hover:text-white transition-colors relative"
-            >
+          >
             <span className="relative flex items-center gap-2">
               <img
-              src="/browserbase.png"
-              alt="Profile"
-              className="w-6 h-6 rounded-full"
+                src={user?.user_metadata?.avatar_url || "/default-profile.png"} // Use Google user image or fallback
+                alt="Profile"
+                className="w-6 h-6 rounded-full"
               />
               <span className="absolute -bottom-1 left-0 w-full h-px bg-violet-400 transform scale-x-0 transition-transform duration-300 origin-left group-hover:scale-x-100" />
             </span>
-            </Link>
+          </Link>
+          {user ? (
+            <div className="flex items-center gap-4">
+               <button
+                onClick={async () => {
+                  await supabase.auth.signOut();
+                  window.location.reload();
+                }}
+                className="px-4 py-2 bg-red-500 rounded hover:bg-red-600 relative group"
+              >
+                Logout
+                <span className="absolute top-full mt-1 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-sm px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                  {user.user_metadata?.full_name || "User"}
+                </span>
+              </button>
+            </div>
+          ) : (
+            <div>Loading...</div>
+          )}
         </div>
 
         {/* Hamburger Menu for Mobile */}
@@ -108,39 +131,32 @@ const Navbar = () => {
               Home
             </Link>
             <Link
-              href="/about-us"
+              href="/assistant"
               className="text-gray-400 hover:text-white transition-colors"
               onClick={toggleMenu}
             >
-              About Us
+              Assistance
             </Link>
             <Link
-              href="/our-partners"
+              href="/track_activity"
               className="text-gray-400 hover:text-white transition-colors"
               onClick={toggleMenu}
             >
-              Our Partners
+              Track Activity
             </Link>
             <Link
-              href="/our-gallery"
+              href="/browse"
               className="text-gray-400 hover:text-white transition-colors"
               onClick={toggleMenu}
             >
-              Our Gallery
+              Browse
             </Link>
             <Link
-              href="/race-with-us"
+              href="/profile"
               className="text-gray-400 hover:text-white transition-colors"
               onClick={toggleMenu}
             >
-              Race with Us
-            </Link>
-            <Link
-              href="/contact-us"
-              className="text-gray-400 hover:text-white transition-colors"
-              onClick={toggleMenu}
-            >
-              Contact Us
+              Profile
             </Link>
           </div>
         </div>
