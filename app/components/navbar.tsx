@@ -34,50 +34,54 @@ const Navbar = () => {
             </span>
           </Link>
           <Link
-            href="/about-us"
+            href="/assistance"
             className="group flex items-center gap-2 text-gray-400 hover:text-white transition-colors relative"
           >
             <span className="relative">
-              About Us
+              Assistance
               <span className="absolute -bottom-1 left-0 w-full h-px bg-violet-400 transform scale-x-0 transition-transform duration-300 origin-left group-hover:scale-x-100" />
             </span>
           </Link>
           <Link
-            href="/our-partners"
+            href="/track_activity"
             className="group flex items-center gap-2 text-gray-400 hover:text-white transition-colors relative"
           >
             <span className="relative">
-              Our Partners
+              Track Activity
               <span className="absolute -bottom-1 left-0 w-full h-px bg-violet-400 transform scale-x-0 transition-transform duration-300 origin-left group-hover:scale-x-100" />
             </span>
           </Link>
           <Link
-            href="/our-gallery"
+            href="/"
             className="group flex items-center gap-2 text-gray-400 hover:text-white transition-colors relative"
           >
             <span className="relative">
-              Our Gallery
+              
               <span className="absolute -bottom-1 left-0 w-full h-px bg-violet-400 transform scale-x-0 transition-transform duration-300 origin-left group-hover:scale-x-100" />
             </span>
           </Link>
           <Link
-            href="/race-with-us"
+            href="/browse"
             className="group flex items-center gap-2 text-gray-400 hover:text-white transition-colors relative"
           >
             <span className="relative">
-              Race with Us
+              Browse
               <span className="absolute -bottom-1 left-0 w-full h-px bg-violet-400 transform scale-x-0 transition-transform duration-300 origin-left group-hover:scale-x-100" />
             </span>
           </Link>
-          <Link
-            href="/contact-us"
+            <Link
+            href="/profile"
             className="group flex items-center gap-2 text-gray-400 hover:text-white transition-colors relative"
-          >
-            <span className="relative">
-              Contact Us
+            >
+            <span className="relative flex items-center gap-2">
+              <img
+              src="/browserbase.png"
+              alt="Profile"
+              className="w-6 h-6 rounded-full"
+              />
               <span className="absolute -bottom-1 left-0 w-full h-px bg-violet-400 transform scale-x-0 transition-transform duration-300 origin-left group-hover:scale-x-100" />
             </span>
-          </Link>
+            </Link>
         </div>
 
         {/* Hamburger Menu for Mobile */}

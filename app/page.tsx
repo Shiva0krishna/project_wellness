@@ -3,19 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Navbar from "./components/navbar";
-import ProjectCard, {
-  ProjectCardProps,
-} from "./components/project_card/project_card";
-import {
-  Github,
-  ExternalLink,
-  Mail,
-  Linkedin,
-  ChevronDown,
-  Menu,
-  Globe,
-  X,
-} from "lucide-react";
+import MetricsCard from "./components/metrics_card/metrics_card";
 
 const GrainOverlay = () => {
   return (
@@ -30,44 +18,39 @@ const GrainOverlay = () => {
       />
       <div
         className="absolute inset-0"
-        style={{
-          backdropFilter: "contrast(120%) brightness(95%)",
-          mixBlendMode: "overlay",
-        }}
+        style={{ backdropFilter: "contrast(120%) brightness(95%)", mixBlendMode: "overlay" }}
       />
     </div>
   );
 };
 
-type BlobPosition = "top-right" | "top-left" | "bottom-right" | "bottom-left";
+const dailyMetrics = [
+  { day: "Morning", calories: 500 },
+  { day: "Afternoon", calories: 700 },
+  { day: "Evening", calories: 600 },
+  { day: "Night", calories: 400 },
+];
 
-const GradientBlob = ({
-  position = "top-right",
-}: {
-  position?: BlobPosition;
-}) => {
-  const positionClasses: Record<BlobPosition, string> = {
-    "top-right": "top-0 right-0 translate-x-1/4 -translate-y-1/4",
-    "top-left": "top-0 left-0 -translate-x-1/4 -translate-y-1/4",
-    "bottom-right": "bottom-0 right-0 translate-x-1/4 translate-y-1/4",
-    "bottom-left": "bottom-0 left-0 -translate-x-1/4 translate-y-1/4",
-  };
+const weeklyMetrics = [
+  { day: "Monday", calories: 2200 },
+  { day: "Tuesday", calories: 2100 },
+  { day: "Wednesday", calories: 2500 },
+  { day: "Thursday", calories: 2300 },
+  { day: "Friday", calories: 2000 },
+  { day: "Saturday", calories: 2600 },
+  { day: "Sunday", calories: 2400 },
+];
 
-  return (
-    <div
-      className={`absolute ${positionClasses[position]} w-[500px] h-[500px] rounded-full opacity-30 blur-3xl pointer-events-none`}
-      style={{
-        background:
-          "radial-gradient(circle, rgba(59,130,246,0.2) 0%, rgba(59,130,246,0) 70%)",
-      }}
-    />
-  );
-};
+const monthlyMetrics = [
+  { day: "Week 1", calories: 15000 },
+  { day: "Week 2", calories: 15500 },
+  { day: "Week 3", calories: 14800 },
+  { day: "Week 4", calories: 15200 },
+];
 
 const Portfolio = () => {
-  const [activeSection, setActiveSection] = useState("hero");
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [selectedPeriod, setSelectedPeriod] = useState("weekly");
 
   useEffect(() => {
     const handleScroll = () => {
@@ -80,9 +63,80 @@ const Portfolio = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const getMetricsData = () => {
+    switch (selectedPeriod) {
+      case "daily":
+        return dailyMetrics;
+      case "monthly":
+        return monthlyMetrics;
+      default:
+        return weeklyMetrics;
+    }
+  };
+
   return (
     <div className="relative min-h-screen bg-zinc-950 text-gray-100 overflow-hidden">
-      This is the project
+      <GrainOverlay />
+      <Navbar />
+
+      <div className="relative z-10 min-h-screen backdrop-contrast-110 backdrop-brightness-95">
+        <section className="relative min-h-screen flex items-center overflow-hidden">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="max-w-7xl mx-auto px-4 py-32 z-20"
+          >
+            <motion.h1 className="text-5xl md:text-7xl font-extralight mb-6 tracking-tight leading-tight">
+              Activity Goals To Improve Health
+            </motion.h1>
+            <motion.p className="text-gray-400 text-xl md:text-2xl max-w-2xl mb-8 font-light">
+              Coaching that fits you. Achieve your fitness goals through customised coaching and actionable tips based on your health and activity history.
+            </motion.p>
+          </motion.div>
+        </section>
+
+        <section id="metrics" className="relative py-32">
+          <div className="max-w-7xl mx-auto px-4 z-20 relative">
+            <h2 className="text-4xl md:text-5xl font-extralight mb-16 tracking-tight">
+              Calories Tracking
+            </h2>
+            <div className="flex gap-4 mb-6">
+              <button
+                className={`px-4 py-2 rounded-md ${selectedPeriod === "daily" ? "bg-blue-500 text-white" : "bg-gray-700"}`}
+                onClick={() => setSelectedPeriod("daily")}
+              >
+                Daily
+              </button>
+              <button
+                className={`px-4 py-2 rounded-md ${selectedPeriod === "weekly" ? "bg-blue-500 text-white" : "bg-gray-700"}`}
+                onClick={() => setSelectedPeriod("weekly")}
+              >
+                Weekly
+              </button>
+              <button
+                className={`px-4 py-2 rounded-md ${selectedPeriod === "monthly" ? "bg-blue-500 text-white" : "bg-gray-700"}`}
+                onClick={() => setSelectedPeriod("monthly")}
+              >
+                Monthly
+              </button>
+            </div>
+            <MetricsCard
+              title={`Calorie Intake (${selectedPeriod.charAt(0).toUpperCase() + selectedPeriod.slice(1)})`}
+              subtitle="Health Metrics"
+              description={`Overview of your ${selectedPeriod} calorie intake.`}
+              period={`Last ${selectedPeriod === "daily" ? "Day" : selectedPeriod === "weekly" ? "7 Days" : "4 Weeks"}`}
+              metrics={getMetricsData()}
+            />
+          </div>
+        </section>
+
+        <footer className="border-t border-gray-800/20">
+          <div className="max-w-7xl mx-auto px-4 py-8">
+            <div className="text-sm text-gray-500">© {new Date().getFullYear()} All rights reserved.</div>
+          </div>
+        </footer>
+      </div>
     </div>
   );
 };
