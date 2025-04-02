@@ -14,5 +14,8 @@ app.use(express.json());
 const userRoutes = require('./routes/user');
 app.use('/api/user', userRoutes);
 
+const trackingRoutes = require('./routes/tracking');
+app.use('/api/tracking', trackingRoutes);
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

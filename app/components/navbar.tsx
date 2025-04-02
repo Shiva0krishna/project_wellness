@@ -33,7 +33,7 @@ const Navbar = () => {
           href="/"
           className="text-2xl font-light tracking-wider hover:text-violet-400 transition-colors"
         >
-          FT-25
+          P::w
         </Link>
 
         {/* Desktop Links */}

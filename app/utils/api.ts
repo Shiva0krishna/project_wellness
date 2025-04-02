@@ -29,3 +29,33 @@ export const updateUserProfile = async (token: string, profileData: any) => {
   console.log("Updating user profile with data:", profileData);
   return sendRequest("/user/profile", "PUT", token, profileData);
 };
+
+// Fetch weight tracking data
+export const fetchWeightData = async (token: string) => {
+  return sendRequest("/tracking/weight", "GET", token);
+};
+
+// Add weight tracking data
+export const addWeightData = async (token: string, weightData: any) => {
+  return sendRequest("/tracking/weight", "POST", token, weightData);
+};
+
+// Fetch calorie tracking data
+export const fetchCalorieData = async (token: string) => {
+  return sendRequest("/tracking/calories", "GET", token);
+};
+
+// Add calorie tracking data
+export const addCalorieData = async (token: string, calorieData: any) => {
+  return sendRequest("/tracking/calories", "POST", token, calorieData);
+};
+
+// Fetch sleep tracking data
+export const fetchSleepData = async (token: string) => {
+  return sendRequest("/tracking/sleep", "GET", token);
+};
+
+// Add sleep tracking data
+export const addSleepData = async (token: string, sleepData: any) => {
+  return sendRequest("/tracking/sleep", "POST", token, sleepData);
+};
