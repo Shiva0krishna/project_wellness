@@ -1,36 +1,37 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Medical and Health Assistant
 
-## Getting Started
+## Overview
+The **Medical and Health Assistant** is an AI-powered chatbot that provides medical guidance, health-related information, and basic diagnostic assistance. It helps users with general health inquiries, symptom analysis, and diet recommendations.
 
-First, run the development server:
+## Features
+- AI-driven chatbot for medical assistance
+- Symptom-based health guidance
+- Diet and nutrition recommendations
+- Calorie, weight, and sleep tracking
+- Medical precautions and alerts
+- Integration with Supabase and PostgreSQL for secure data storage
+- User authentication (including Google Sign-In)
+- Health analysis with visual graph dashboards
+- Web-based UI for user interaction
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Technologies Used
+- **Backend:** Node.js, Express.js
+- **Frontend:** Next.js with TypeScript
+- **Database:** Supabase (PostgreSQL)
+- **Authentication:** Firebase Auth (including Google Sign-In)
+- **Machine Learning:** Transformer models for NLP
+- **Deployment:** , Supabase
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Future Enhancements
+- Implementing Retrieval-Augmented Generation (RAG) to provide personalized assistance based on user data
+- Integration with wearable health devices
+- Voice-based interaction
+- Advanced AI diagnostics
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Contribution
+Feel free to contribute by submitting issues or pull requests.
 
-## Learn More
+## License
+This project is licensed under the MIT License.
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
