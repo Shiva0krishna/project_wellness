@@ -21,7 +21,47 @@ The **Medical and Health Assistant** is an AI-powered chatbot that provides medi
 - **Authentication:** Firebase Auth (including Google Sign-In)
 - **Machine Learning:** Transformer models for NLP
 - **Deployment:** , Supabase
+Setup Instructions
 
+Clone the repository
+
+git clone https://github.com/Shiva0krishna/project_wellness.git
+cd project_wellness
+
+Install dependencies
+
+npm install
+
+Set up environment variables
+
+Create a .env file and add the required keys (Supabase credentials, Firebase credentials, API keys, etc.).
+
+Run the application
+
+npm run dev
+
+Access the application
+
+Open http://localhost:3000 in your browser.
+cd project_wellness/backend
+
+Install dependencies
+
+npm install
+
+Set up environment variables
+
+Create a .env file and add the required keys (Supabase credentials, Firebase credentials, API keys, etc.).
+
+Run the application
+
+npm run dev
+
+Access the application
+
+Open http://localhost:5000 in your browser.
+
+connect to supabse and update the details in .env files
 
 ## Future Enhancements
 - Implementing Retrieval-Augmented Generation (RAG) to provide personalized assistance based on user data
