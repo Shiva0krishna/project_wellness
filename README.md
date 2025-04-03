@@ -16,6 +16,32 @@ The **Medical and Health Assistant** is an AI-powered chatbot that provides medi
 - Health analysis with visual graph dashboards
 - Web-based UI for user interaction
 
+## Architecture
+The architecture of the **Medical and Health Assistant** project is designed to leverage modern web and AI technologies for scalable and efficient operation.
+
+### High-Level Architecture
+1. **Frontend**: The web interface built with Next.js and TypeScript.
+2. **Backend**: REST API and business logic implemented using Node.js and Express.js.
+3. **Database**: Data storage managed with Supabase, utilizing PostgreSQL.
+4. **Authentication**: User authentication handled by Firebase Auth, including Google Sign-In.
+5. **AI/ML**: Natural Language Processing (NLP) powered by Transformer models.
+6. **Deployment**: Application deployment managed through Supabase.
+
+### Workflow
+1. **User Interaction**:
+   - Users interact with the web-based UI.
+   - Authentication is managed via Firebase Auth.
+
+2. **Data Handling**:
+   - User data, health metrics, and preferences are securely stored in a PostgreSQL database managed by Supabase.
+   - Data is retrieved and updated through the backend APIs.
+
+3. **AI/ML Processing**:
+   - User queries and interactions are processed by Transformer models to provide personalized medical advice and recommendations.
+
+4. **Visualization**:
+   - Health metrics and analysis are presented to the user through visual graph dashboards in the frontend.
+
 ## Technologies Used
 - **Backend:** Node.js, Express.js
 - **Frontend:** Next.js with TypeScript
@@ -79,4 +105,3 @@ Feel free to contribute by submitting issues or pull requests.
 
 ## License
 This project is licensed under the MIT License.
-```
