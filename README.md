@@ -1,7 +1,9 @@
+
+```markdown
 # Medical and Health Assistant
 
 ## Overview
-The **Medical and Health Assistant** is an AI-powered chatbot that provides medical guidance, health-related information, and basic diagnostic assistance. It helps users with general health inquiries, symptom analysis, and diet recommendations.
+The **Medical and Health Assistant** is an AI-powered chatbot that provides medical guidance, health-related information, and basic diagnostic assistance. It helps users with general health inquiries, diet and nutrition recommendations, and tracking of various health metrics.
 
 ## Features
 - AI-driven chatbot for medical assistance
@@ -20,48 +22,51 @@ The **Medical and Health Assistant** is an AI-powered chatbot that provides medi
 - **Database:** Supabase (PostgreSQL)
 - **Authentication:** Firebase Auth (including Google Sign-In)
 - **Machine Learning:** Transformer models for NLP
-- **Deployment:** , Supabase
-Setup Instructions
+- **Deployment:** Supabase
 
-Clone the repository
+## Setup Instructions
 
+### Clone the Repository
+```sh
 git clone https://github.com/Shiva0krishna/project_wellness.git
 cd project_wellness
+```
 
-Install dependencies
-
+### Install Dependencies (Frontend)
+```sh
 npm install
+```
 
-Set up environment variables
+### Set Up Environment Variables (Frontend)
+Create a `.env` file and add the required keys (Supabase credentials, Firebase credentials, API keys, etc.).
 
-Create a .env file and add the required keys (Supabase credentials, Firebase credentials, API keys, etc.).
-
-Run the application
-
+### Run the Application (Frontend)
+```sh
 npm run dev
+```
 
-Access the application
+### Access the Application (Frontend)
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-Open http://localhost:3000 in your browser.
+### Install Dependencies (Backend)
+```sh
 cd project_wellness/backend
-
-Install dependencies
-
 npm install
+```
 
-Set up environment variables
+### Set Up Environment Variables (Backend)
+Create a `.env` file and add the required keys (Supabase credentials, Firebase credentials, API keys, etc.).
 
-Create a .env file and add the required keys (Supabase credentials, Firebase credentials, API keys, etc.).
-
-Run the application
-
+### Run the Application (Backend)
+```sh
 npm run dev
+```
 
-Access the application
+### Access the Application (Backend)
+Open [http://localhost:5000](http://localhost:5000) in your browser.
 
-Open http://localhost:5000 in your browser.
-
-connect to supabse and update the details in .env files
+### Connect to Supabase
+Ensure to connect to Supabase and update the details in the `.env` files.
 
 ## Future Enhancements
 - Implementing Retrieval-Augmented Generation (RAG) to provide personalized assistance based on user data
@@ -74,4 +79,4 @@ Feel free to contribute by submitting issues or pull requests.
 
 ## License
 This project is licensed under the MIT License.
-
+```
