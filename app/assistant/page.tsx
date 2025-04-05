@@ -1,6 +1,9 @@
 "use client";
 import AuthGuard from "../utils/authGuard";
 import { useState, useRef, useEffect } from "react";
+import { motion } from "framer-motion";
+import { sendGeminiQuery } from "../utils/api";
+import { supabase } from "../utils/supabaseClient";
 
 interface Message {
   id: number;
@@ -33,6 +36,7 @@ const Assistant = () => {
   const [selectedContext, setSelectedContext] = useState<ConversationContext>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -68,7 +72,7 @@ const Assistant = () => {
     setMessages([initialMessage]);
   };
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim()) return;
 
@@ -80,26 +84,46 @@ const Assistant = () => {
     };
 
     setMessages(prev => [...prev, userMessage]);
-    
-    // Simulate assistant response
-    setTimeout(() => {
+    setNewMessage('');
+    setIsLoading(true);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("No active session");
+
+      const assistantResponse = await sendGeminiQuery(
+        session.access_token,
+        selectedContext as string,
+        newMessage
+      );
+
       const assistantMessage: Message = {
         id: Date.now() + 1,
-        text: "I'm here to help you with your fitness journey!",
+        text: assistantResponse,
         sender: 'assistant',
         timestamp: new Date(),
       };
-      setMessages(prev => [...prev, assistantMessage]);
-    }, 1000);
 
-    setNewMessage('');
+      setMessages(prev => [...prev, assistantMessage]);
+    } catch (error) {
+      console.error("Error:", error);
+      const errorMessage: Message = {
+        id: Date.now() + 1,
+        text: "Sorry, I couldn't process your request. Please try again later.",
+        sender: 'assistant',
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <AuthGuard>
       <div className="min-h-screen bg-gray-800 text-gray-200 p-6">
-        <div className="max-w-3xl mx-auto">
-          <h1 className="text-3xl font-semibold text-center mb-8">Fitness Assistant</h1>
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-4xl font-semibold text-center mb-8">Fitness Assistant</h1>
           
           {!selectedContext ? (
             // Context Selection Screen
@@ -117,7 +141,7 @@ const Assistant = () => {
             </div>
           ) : (
             // Chat Interface
-            <div className="bg-gray-700 rounded-lg shadow-lg p-4 h-[600px] flex flex-col">
+            <div className="bg-gray-700 rounded-lg shadow-lg p-6 h-[700px] flex flex-col">
               {/* Context Header */}
               <div className="flex justify-between items-center mb-4 pb-2 border-b border-gray-600">
                 <div className="flex items-center gap-2">
@@ -148,7 +172,10 @@ const Assistant = () => {
                       message.sender === 'user' ? 'text-right' : 'text-left'
                     }`}
                   >
-                    <div
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3 }}
                       className={`inline-block p-3 rounded-lg ${
                         message.sender === 'user'
                           ? 'bg-blue-600 text-white'
@@ -156,12 +183,24 @@ const Assistant = () => {
                       }`}
                     >
                       {message.text}
-                    </div>
+                    </motion.div>
                     <div className="text-xs text-gray-400 mt-1">
                       {message.timestamp.toLocaleTimeString()}
                     </div>
                   </div>
                 ))}
+                {isLoading && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.5, repeat: Infinity }}
+                    className="text-left mb-4"
+                  >
+                    <div className="inline-block p-3 rounded-lg bg-gray-600 text-gray-200">
+                      Typing...
+                    </div>
+                  </motion.div>
+                )}
                 <div ref={messagesEndRef} />
               </div>
 
@@ -172,11 +211,12 @@ const Assistant = () => {
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   placeholder="Type your message..."
-                  className="flex-1 p-2 rounded-lg bg-gray-600 text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="flex-1 p-3 rounded-lg bg-gray-600 text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <button
                   type="submit"
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                  disabled={isLoading}
                 >
                   Send
                 </button>

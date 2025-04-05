@@ -17,5 +17,8 @@ app.use('/api/user', userRoutes);
 const trackingRoutes = require('./routes/tracking');
 app.use('/api/tracking', trackingRoutes);
 
+const geminiRoutes = require('./routes/gemini');
+app.use('/api/gemini', geminiRoutes);
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
