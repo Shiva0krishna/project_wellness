@@ -59,3 +59,9 @@ export const fetchSleepData = async (token: string) => {
 export const addSleepData = async (token: string, sleepData: any) => {
   return sendRequest("/tracking/sleep", "POST", token, sleepData);
 };
+
+// Send query to Gemini API
+export const sendGeminiQuery = async (token: string, context: string, query: string) => {
+  const response = await sendRequest("/gemini/query", "POST", token, { context, query });
+  return response.response; // Assuming the backend returns the response in a `response` field
+};
