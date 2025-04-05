@@ -1,6 +1,8 @@
 "use client";
 import AuthGuard from "../utils/authGuard";
 import { useState, useRef, useEffect } from "react";
+import { sendGeminiQuery } from "../utils/api";
+import { supabase } from "../utils/supabaseClient";
 
 interface Message {
   id: number;
@@ -68,7 +70,7 @@ const Assistant = () => {
     setMessages([initialMessage]);
   };
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim()) return;
 
@@ -80,17 +82,35 @@ const Assistant = () => {
     };
 
     setMessages(prev => [...prev, userMessage]);
-    
-    // Simulate assistant response
-    setTimeout(() => {
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("No active session");
+
+      const assistantResponse = await sendGeminiQuery(
+        session.access_token,
+        selectedContext as string,
+        newMessage
+      );
+
       const assistantMessage: Message = {
         id: Date.now() + 1,
-        text: "I'm here to help you with your fitness journey!",
+        text: assistantResponse,
         sender: 'assistant',
         timestamp: new Date(),
       };
+
       setMessages(prev => [...prev, assistantMessage]);
-    }, 1000);
+    } catch (error) {
+      console.error("Error:", error);
+      const errorMessage: Message = {
+        id: Date.now() + 1,
+        text: "Sorry, I couldn't process your request. Please try again later.",
+        sender: 'assistant',
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    }
 
     setNewMessage('');
   };
