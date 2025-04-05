@@ -1,36 +1,107 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-## Getting Started
+```markdown
+# Medical and Health Assistant
 
-First, run the development server:
+## Overview
+The **Medical and Health Assistant** is an AI-powered chatbot that provides medical guidance, health-related information, and basic diagnostic assistance. It helps users with general health inquiries, diet and nutrition recommendations, and tracking of various health metrics.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Features
+- AI-driven chatbot for medical assistance
+- Symptom-based health guidance
+- Diet and nutrition recommendations
+- Calorie, weight, and sleep tracking
+- Medical precautions and alerts
+- Integration with Supabase and PostgreSQL for secure data storage
+- User authentication (including Google Sign-In)
+- Health analysis with visual graph dashboards
+- Web-based UI for user interaction
+
+## Architecture
+The architecture of the **Medical and Health Assistant** project is designed to leverage modern web and AI technologies for scalable and efficient operation.
+
+### High-Level Architecture
+1. **Frontend**: The web interface built with Next.js and TypeScript.
+2. **Backend**: REST API and business logic implemented using Node.js and Express.js.
+3. **Database**: Data storage managed with Supabase, utilizing PostgreSQL.
+4. **Authentication**: User authentication handled by Firebase Auth, including Google Sign-In.
+5. **AI/ML**: Natural Language Processing (NLP) powered by Transformer models.
+6. **Deployment**: Application deployment managed through Supabase.
+
+### Workflow
+1. **User Interaction**:
+   - Users interact with the web-based UI.
+   - Authentication is managed via Firebase Auth.
+
+2. **Data Handling**:
+   - User data, health metrics, and preferences are securely stored in a PostgreSQL database managed by Supabase.
+   - Data is retrieved and updated through the backend APIs.
+
+3. **AI/ML Processing**:
+   - User queries and interactions are processed by Transformer models to provide personalized medical advice and recommendations.
+
+4. **Visualization**:
+   - Health metrics and analysis are presented to the user through visual graph dashboards in the frontend.
+
+## Technologies Used
+- **Backend:** Node.js, Express.js
+- **Frontend:** Next.js with TypeScript
+- **Database:** Supabase (PostgreSQL)
+- **Authentication:** Firebase Auth (including Google Sign-In)
+- **Machine Learning:** Transformer models for NLP
+- **Deployment:** Supabase
+
+## Setup Instructions
+
+### Clone the Repository
+```sh
+git clone https://github.com/Shiva0krishna/project_wellness.git
+cd project_wellness
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Install Dependencies (Frontend)
+```sh
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Set Up Environment Variables (Frontend)
+Create a `.env` file and add the required keys (Supabase credentials, Firebase credentials, API keys, etc.).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Run the Application (Frontend)
+```sh
+npm run dev
+```
 
-## Learn More
+### Access the Application (Frontend)
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-To learn more about Next.js, take a look at the following resources:
+### Install Dependencies (Backend)
+```sh
+cd project_wellness/backend
+npm install
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Set Up Environment Variables (Backend)
+Create a `.env` file and add the required keys (Supabase credentials, Firebase credentials, API keys, etc.).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Run the Application (Backend)
+```sh
+npm run dev
+```
 
-## Deploy on Vercel
+### Access the Application (Backend)
+Open [http://localhost:5000](http://localhost:5000) in your browser.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Connect to Supabase
+Ensure to connect to Supabase and update the details in the `.env` files.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Future Enhancements
+- Implementing Retrieval-Augmented Generation (RAG) to provide personalized assistance based on user data
+- Integration with wearable health devices
+- Voice-based interaction
+- Advanced AI diagnostics
+
+## Contribution
+Feel free to contribute by submitting issues or pull requests.
+
+## License
+This project is licensed under the MIT License.

@@ -1,7 +1,10 @@
 "use client";
 import AuthGuard from "../utils/authGuard";
 import { useState, useRef, useEffect } from "react";
+<<<<<<< HEAD
 import { motion } from "framer-motion";
+=======
+>>>>>>> 459373b659780a5bb1c65406297a5228dbdff747
 import { sendGeminiQuery } from "../utils/api";
 import { supabase } from "../utils/supabaseClient";
 
@@ -84,8 +87,11 @@ const Assistant = () => {
     };
 
     setMessages(prev => [...prev, userMessage]);
+<<<<<<< HEAD
     setNewMessage('');
     setIsLoading(true);
+=======
+>>>>>>> 459373b659780a5bb1c65406297a5228dbdff747
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -103,6 +109,21 @@ const Assistant = () => {
         sender: 'assistant',
         timestamp: new Date(),
       };
+<<<<<<< HEAD
+=======
+
+      setMessages(prev => [...prev, assistantMessage]);
+    } catch (error) {
+      console.error("Error:", error);
+      const errorMessage: Message = {
+        id: Date.now() + 1,
+        text: "Sorry, I couldn't process your request. Please try again later.",
+        sender: 'assistant',
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    }
+>>>>>>> 459373b659780a5bb1c65406297a5228dbdff747
 
       setMessages(prev => [...prev, assistantMessage]);
     } catch (error) {
