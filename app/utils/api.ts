@@ -1,4 +1,5 @@
 export const API_BASE_URL = "http://localhost:5000/api";
+
 // Helper function to send API requests
 const sendRequest = async (endpoint: string, method: string, token: string, body?: any) => {
   const headers: Record<string, string> = {
@@ -64,4 +65,27 @@ export const addSleepData = async (token: string, sleepData: any) => {
 export const sendGeminiQuery = async (token: string, context: string, query: string) => {
   const response = await sendRequest("/gemini/query", "POST", token, { context, query });
   return response.response; // Assuming the backend returns the response in a `response` field
+};
+
+// Assistant: Fetch all contexts
+export const getContexts = async (token: string) => {
+  return sendRequest("/assistant/contexts", "GET", token);
+};
+
+// Assistant: Create a new context
+export const createContext = async (token: string, contextData: { id: string; name: string }) => {
+  return sendRequest("/assistant/contexts", "POST", token, contextData);
+};
+
+// Assistant: Fetch messages for a given context
+export const getMessages = async (token: string, contextId: string) => {
+  return sendRequest(`/assistant/messages?contextId=${contextId}`, "GET", token);
+};
+
+// Assistant: Add a new message to a context
+export const addMessage = async (
+  token: string,
+  messageData: { contextId: string; sender: string; message: string }
+) => {
+  return sendRequest("/assistant/messages", "POST", token, messageData);
 };

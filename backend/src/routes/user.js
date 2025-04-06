@@ -4,6 +4,36 @@ const authenticateUser = require("../middleware/auth");
 
 const router = express.Router();
 
+// Fetch user profile
+router.get("/profile", authenticateUser, async (req, res) => {
+  const userId = req.user.id; // Extracted from the token by the middleware
+  console.log("Fetching profile for user ID:", userId);
+
+  try {
+    const { data: user, error } = await supabase
+      .from("users")
+      .select("name, gender, dob, height_cm, weight_kg, target_weight_kg, activity_level, sleep_hours")
+      .eq("user_id", userId)
+      .maybeSingle(); // Fetch a single user record
+
+    if (error) {
+      console.error("Error fetching user profile:", error);
+      return res.status(500).json({ error: "Failed to fetch user profile.", details: error });
+    }
+
+    if (!user) {
+      console.warn("User not found in the database.");
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    console.log("User profile fetched successfully:", user);
+    res.status(200).json(user);
+  } catch (error) {
+    console.error("Error fetching profile:", error);
+    res.status(500).json({ error: "Internal Server Error", details: error.message });
+  }
+});
+
 // Update user profile
 router.put("/profile", authenticateUser, async (req, res) => {
   const { name, gender, dob, height_cm, weight_kg, target_weight_kg, activity_level, sleep_hours } = req.body;
@@ -17,7 +47,7 @@ router.put("/profile", authenticateUser, async (req, res) => {
       .from("users")
       .select("*")
       .eq("user_id", userId)
-      .maybeSingle(); // ✅ Prevents errors if no user is found
+      .maybeSingle(); // Prevents errors if no user is found
 
     if (fetchError) {
       console.error("Error fetching user:", fetchError);
@@ -45,7 +75,7 @@ router.put("/profile", authenticateUser, async (req, res) => {
         sleep_hours,
       })
       .eq("user_id", userId)
-      .select(); // ✅ Ensures we return updated rows
+      .select(); // Ensures we return updated rows
 
     if (error) {
       console.error("Supabase update error:", error);

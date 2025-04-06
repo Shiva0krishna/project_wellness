@@ -34,11 +34,7 @@ router.post("/query", authenticateUser, async (req, res) => {
           role: "user",
           parts: [
             {
-<<<<<<< HEAD
               text: `You are given the following context:\n${context}\n\nNow, respond to the query:\n${query}\n\nPlease ensure your response is precise and concise,medium size answers in bullet points are preferred.`,
-=======
-              text: `You are given the following context:\n${context}\n\nNow, respond to the query:\n${query}\n\nPlease ensure your response is precise ,small and concise.`
->>>>>>> 459373b659780a5bb1c65406297a5228dbdff747
             }
           ]
         }

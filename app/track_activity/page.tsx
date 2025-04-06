@@ -1,6 +1,7 @@
 "use client";
 
 import AuthGuard from "../utils/authGuard";
+import Navbar from "../components/navbar";
 import { useRouter } from "next/navigation";
 
 const TrackActivity = () => {
@@ -12,7 +13,8 @@ const TrackActivity = () => {
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-gray-800 text-gray-200 p-6">
+      <Navbar />
+      <div className="min-h-screen bg-gray-800 text-gray-200 p-20">
         <h1 className="text-3xl font-semibold text-center mb-8">Track Your Activities</h1>
         <div className="flex flex-col space-y-4 max-w-2xl mx-auto">
           {/* Weight Tracking Section */}

@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Navbar from "./components/navbar";
-import MetricsCard from "./components/metrics_card/metrics_card";
 
 const GrainOverlay = () => {
   return (
@@ -24,33 +23,8 @@ const GrainOverlay = () => {
   );
 };
 
-const dailyMetrics = [
-  { day: "Morning", calories: 500 },
-  { day: "Afternoon", calories: 700 },
-  { day: "Evening", calories: 600 },
-  { day: "Night", calories: 400 },
-];
-
-const weeklyMetrics = [
-  { day: "Monday", calories: 2200 },
-  { day: "Tuesday", calories: 2100 },
-  { day: "Wednesday", calories: 2500 },
-  { day: "Thursday", calories: 2300 },
-  { day: "Friday", calories: 2000 },
-  { day: "Saturday", calories: 2600 },
-  { day: "Sunday", calories: 2400 },
-];
-
-const monthlyMetrics = [
-  { day: "Week 1", calories: 15000 },
-  { day: "Week 2", calories: 15500 },
-  { day: "Week 3", calories: 14800 },
-  { day: "Week 4", calories: 15200 },
-];
-
 const Portfolio = () => {
   const [scrollProgress, setScrollProgress] = useState(0);
-  const [selectedPeriod, setSelectedPeriod] = useState("weekly");
 
   useEffect(() => {
     const handleScroll = () => {
@@ -62,17 +36,6 @@ const Portfolio = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
-  const getMetricsData = () => {
-    switch (selectedPeriod) {
-      case "daily":
-        return dailyMetrics;
-      case "monthly":
-        return monthlyMetrics;
-      default:
-        return weeklyMetrics;
-    }
-  };
 
   return (
     <div className="relative min-h-screen bg-zinc-950 text-gray-100 overflow-hidden">
@@ -94,41 +57,6 @@ const Portfolio = () => {
               Coaching that fits you. Achieve your fitness goals through customised coaching and actionable tips based on your health and activity history.
             </motion.p>
           </motion.div>
-        </section>
-
-        <section id="metrics" className="relative py-32">
-          <div className="max-w-7xl mx-auto px-4 z-20 relative">
-            <h2 className="text-4xl md:text-5xl font-extralight mb-16 tracking-tight">
-              Calories Tracking
-            </h2>
-            <div className="flex gap-4 mb-6">
-              <button
-                className={`px-4 py-2 rounded-md ${selectedPeriod === "daily" ? "bg-blue-500 text-white" : "bg-gray-700"}`}
-                onClick={() => setSelectedPeriod("daily")}
-              >
-                Daily
-              </button>
-              <button
-                className={`px-4 py-2 rounded-md ${selectedPeriod === "weekly" ? "bg-blue-500 text-white" : "bg-gray-700"}`}
-                onClick={() => setSelectedPeriod("weekly")}
-              >
-                Weekly
-              </button>
-              <button
-                className={`px-4 py-2 rounded-md ${selectedPeriod === "monthly" ? "bg-blue-500 text-white" : "bg-gray-700"}`}
-                onClick={() => setSelectedPeriod("monthly")}
-              >
-                Monthly
-              </button>
-            </div>
-            <MetricsCard
-              title={`Calorie Intake (${selectedPeriod.charAt(0).toUpperCase() + selectedPeriod.slice(1)})`}
-              subtitle="Health Metrics"
-              description={`Overview of your ${selectedPeriod} calorie intake.`}
-              period={`Last ${selectedPeriod === "daily" ? "Day" : selectedPeriod === "weekly" ? "7 Days" : "4 Weeks"}`}
-              metrics={getMetricsData()}
-            />
-          </div>
         </section>
 
         <footer className="border-t border-gray-800/20">

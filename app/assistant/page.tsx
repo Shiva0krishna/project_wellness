@@ -1,249 +1,245 @@
 "use client";
 import AuthGuard from "../utils/authGuard";
-import { useState, useRef, useEffect } from "react";
-<<<<<<< HEAD
-import { motion } from "framer-motion";
-=======
->>>>>>> 459373b659780a5bb1c65406297a5228dbdff747
-import { sendGeminiQuery } from "../utils/api";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "../utils/supabaseClient";
+import {
+  getContexts,
+  getMessages,
+  addMessage,
+  sendGeminiQuery,
+  createContext as createNewContext,
+} from "../utils/api";
+import Navbar from "../components/navbar";
 
 interface Message {
   id: number;
   text: string;
-  sender: 'user' | 'assistant';
-  timestamp: Date;
+  sender: "user" | "assistant";
+  timestamp: string;
 }
 
-type ConversationContext = 
-  | 'sleep'
-  | 'medical'
-  | 'symptoms'
-  | 'prescription'
-  | 'calorie'
-  | 'weight'
-  | 'knowledge'
-  | null;
-
-const contextOptions = [
-  { id: 'sleep', label: 'Sleep Assistance', icon: '😴' },
-  { id: 'medical', label: 'Medical Advice', icon: '🏥' },
-  { id: 'symptoms', label: 'Symptom Check', icon: '🤒' },
-  { id: 'prescription', label: 'Prescription Help', icon: '💊' },
-  { id: 'calorie', label: 'Calorie Tracking', icon: '🍎' },
-  { id: 'weight', label: 'Weight Management', icon: '⚖️' },
-  { id: 'knowledge', label: 'Fitness Knowledge', icon: '📚' },
-];
+interface Context {
+  id: string;
+  name: string;
+}
 
 const Assistant = () => {
-  const [selectedContext, setSelectedContext] = useState<ConversationContext>(null);
+  const [contexts, setContexts] = useState<Context[]>([]);
+  const [selectedContext, setSelectedContext] = useState<Context | null>(null);
+  const [newContextName, setNewContextName] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
-  const [newMessage, setNewMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [newMessage, setNewMessage] = useState("");
+  const [showChat, setShowChat] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
 
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
-  const getInitialMessage = (context: ConversationContext) => {
-    const contextMessages: { [key: string]: string } = {
-      sleep: "How can I help you improve your sleep patterns?",
-      medical: "What medical information do you need assistance with?",
-      symptoms: "Please describe your symptoms, and I'll try to help.",
-      prescription: "How can I assist you with your prescription information?",
-      calorie: "Let's discuss your calorie tracking goals.",
-      weight: "How can I help you with weight management?",
-      knowledge: "What fitness-related information would you like to learn about?",
-    };
-    
-    return contextMessages[context as string] || "How can I assist you today?";
-  };
-
-  const startConversation = (context: ConversationContext) => {
-    setSelectedContext(context);
-    const initialMessage: Message = {
-      id: Date.now(),
-      text: getInitialMessage(context),
-      sender: 'assistant',
-      timestamp: new Date(),
-    };
-    setMessages([initialMessage]);
+  const loadMessages = async (contextId: string, token: string) => {
+    try {
+      const data = await getMessages(token, contextId);
+      setMessages(data);
+    } catch (err) {
+      console.error("Error loading messages:", err);
+    }
   };
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || !selectedContext) return;
 
-    const userMessage: Message = {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+
+    const userMsg: Message = {
       id: Date.now(),
       text: newMessage,
-      sender: 'user',
-      timestamp: new Date(),
+      sender: "user",
+      timestamp: new Date().toISOString(),
     };
 
-    setMessages(prev => [...prev, userMessage]);
-<<<<<<< HEAD
-    setNewMessage('');
-    setIsLoading(true);
-=======
->>>>>>> 459373b659780a5bb1c65406297a5228dbdff747
+    setMessages((prev) => [...prev, userMsg]);
+    setNewMessage("");
 
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error("No active session");
+    await addMessage(session.access_token, {
+      contextId: selectedContext.id,
+      sender: userMsg.sender,
+      message: userMsg.text,
+    });
 
-      const assistantResponse = await sendGeminiQuery(
-        session.access_token,
-        selectedContext as string,
-        newMessage
-      );
+    const history = [...messages, userMsg]
+      .map((m) => `${m.sender === "user" ? "User" : "Assistant"}: ${m.text}`)
+      .join("\n");
 
-      const assistantMessage: Message = {
-        id: Date.now() + 1,
-        text: assistantResponse,
-        sender: 'assistant',
-        timestamp: new Date(),
-      };
-<<<<<<< HEAD
-=======
+    const response = await sendGeminiQuery(session.access_token, selectedContext.name, history);
 
-      setMessages(prev => [...prev, assistantMessage]);
-    } catch (error) {
-      console.error("Error:", error);
-      const errorMessage: Message = {
-        id: Date.now() + 1,
-        text: "Sorry, I couldn't process your request. Please try again later.",
-        sender: 'assistant',
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, errorMessage]);
-    }
->>>>>>> 459373b659780a5bb1c65406297a5228dbdff747
+    const assistantMsg: Message = {
+      id: Date.now() + 1,
+      text: response,
+      sender: "assistant",
+      timestamp: new Date().toISOString(),
+    };
 
-      setMessages(prev => [...prev, assistantMessage]);
-    } catch (error) {
-      console.error("Error:", error);
-      const errorMessage: Message = {
-        id: Date.now() + 1,
-        text: "Sorry, I couldn't process your request. Please try again later.",
-        sender: 'assistant',
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
+    setMessages((prev) => [...prev, assistantMsg]);
+
+    await addMessage(session.access_token, {
+      contextId: selectedContext.id,
+      sender: assistantMsg.sender,
+      message: assistantMsg.text,
+    });
+  };
+
+  const createContext = async () => {
+    if (!newContextName.trim()) return;
+    const id = crypto.randomUUID();
+    const context = { id, name: newContextName.trim() };
+
+    setContexts((prev) => [...prev, context]);
+    setSelectedContext(context);
+    setShowChat(true);
+    setNewContextName("");
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      await createNewContext(session.access_token, context);
     }
   };
 
+  const loadContexts = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const contextData = await getContexts(session.access_token);
+      setContexts(contextData);
+    } catch (err) {
+      console.error("Error loading contexts:", err);
+    }
+  };
+
+  const handleContextSelect = async (context: Context) => {
+    setSelectedContext(context);
+    setShowChat(true);
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      await loadMessages(context.id, session.access_token);
+    }
+  };
+
+  useEffect(() => {
+    loadContexts();
+  }, []);
+
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-gray-800 text-gray-200 p-6">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-4xl font-semibold text-center mb-8">Fitness Assistant</h1>
-          
-          {!selectedContext ? (
-            // Context Selection Screen
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {contextOptions.map((option) => (
+      <Navbar />
+      <div className="pt-16 h-screen bg-gray-900 text-gray-100">
+        <div className="flex h-[calc(100vh-64px)]">
+          {/* Sidebar */}
+          <div
+            className={`w-full md:w-1/4 bg-gray-800 p-4 border-r border-gray-700 md:block ${
+              showChat ? "hidden md:block" : "block"
+            }`}
+          >
+            <h2 className="text-xl font-semibold mb-4">Your Topics</h2>
+            <div className="space-y-2 overflow-y-auto max-h-[60vh]">
+              {contexts.map((ctx) => (
                 <div
-                  key={option.id}
-                  onClick={() => startConversation(option.id as ConversationContext)}
-                  className="bg-gray-700 p-6 rounded-lg shadow-lg cursor-pointer hover:bg-gray-600 transition"
+                  key={ctx.id}
+                  className={`p-3 rounded-lg cursor-pointer hover:bg-gray-700 ${
+                    selectedContext?.id === ctx.id ? "bg-gray-700" : "bg-gray-800"
+                  }`}
+                  onClick={() => handleContextSelect(ctx)}
                 >
-                  <div className="text-4xl mb-2">{option.icon}</div>
-                  <h3 className="text-xl font-semibold">{option.label}</h3>
+                  {ctx.name}
                 </div>
               ))}
             </div>
-          ) : (
-            // Chat Interface
-            <div className="bg-gray-700 rounded-lg shadow-lg p-6 h-[700px] flex flex-col">
-              {/* Context Header */}
-              <div className="flex justify-between items-center mb-4 pb-2 border-b border-gray-600">
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl">
-                    {contextOptions.find(opt => opt.id === selectedContext)?.icon}
-                  </span>
-                  <h2 className="text-lg font-semibold">
-                    {contextOptions.find(opt => opt.id === selectedContext)?.label}
-                  </h2>
+
+            {/* Create new context */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                createContext();
+              }}
+              className="mt-6"
+            >
+              <input
+                type="text"
+                placeholder="New context name..."
+                value={newContextName}
+                onChange={(e) => setNewContextName(e.target.value)}
+                className="w-full p-2 rounded bg-gray-700 text-white mb-2 focus:outline-none"
+              />
+              <button className="w-full bg-blue-600 hover:bg-blue-700 text-white p-2 rounded">
+                Create
+              </button>
+            </form>
+          </div>
+
+          {/* Chat Window */}
+          <div
+            className={`flex-1 flex flex-col p-4 md:p-6 ${
+              showChat ? "block" : "hidden"
+            } md:block overflow-y-auto`}
+          >
+            {selectedContext ? (
+              <>
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-2xl font-semibold">{selectedContext.name}</h2>
+                  <button
+                    onClick={() => {
+                      setShowChat(false);
+                      setSelectedContext(null);
+                    }}
+                    className="md:hidden bg-gray-700 p-2 rounded text-sm"
+                  >
+                    Back
+                  </button>
                 </div>
-                <button
-                  onClick={() => {
-                    setSelectedContext(null);
-                    setMessages([]);
-                  }}
-                  className="text-sm px-3 py-1 bg-gray-600 rounded-lg hover:bg-gray-500 transition"
-                >
-                  Change Topic
-                </button>
-              </div>
-
-              {/* Messages Area */}
-              <div className="flex-1 overflow-y-auto mb-4">
-                {messages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={`mb-4 ${
-                      message.sender === 'user' ? 'text-right' : 'text-left'
-                    }`}
-                  >
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className={`inline-block p-3 rounded-lg ${
-                        message.sender === 'user'
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-600 text-gray-200'
-                      }`}
+                <div className="flex-1 overflow-y-auto space-y-4 mb-4">
+                  {messages.map((msg) => (
+                    <div
+                      key={msg.id}
+                      className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
                     >
-                      {message.text}
-                    </motion.div>
-                    <div className="text-xs text-gray-400 mt-1">
-                      {message.timestamp.toLocaleTimeString()}
+                      <div
+                        className={`max-w-xs p-3 rounded-lg ${
+                          msg.sender === "user"
+                            ? "bg-blue-600 text-white"
+                            : "bg-gray-700 text-gray-100"
+                        }`}
+                      >
+                        {msg.text}
+                      </div>
                     </div>
-                  </div>
-                ))}
-                {isLoading && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.5, repeat: Infinity }}
-                    className="text-left mb-4"
+                  ))}
+                  <div ref={messagesEndRef} />
+                </div>
+                <form onSubmit={handleSendMessage} className="flex gap-2">
+                  <input
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    className="flex-1 p-3 rounded bg-gray-700 text-white focus:outline-none"
+                    placeholder="Type a message..."
+                  />
+                  <button
+                    type="submit"
+                    className="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded"
                   >
-                    <div className="inline-block p-3 rounded-lg bg-gray-600 text-gray-200">
-                      Typing...
-                    </div>
-                  </motion.div>
-                )}
-                <div ref={messagesEndRef} />
+                    Send
+                  </button>
+                </form>
+              </>
+            ) : (
+              <div className="text-gray-400 text-center m-auto text-lg">
+                Select a context to begin chatting.
               </div>
-
-              {/* Input Area */}
-              <form onSubmit={handleSendMessage} className="flex gap-2">
-                <input
-                  type="text"
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder="Type your message..."
-                  className="flex-1 p-3 rounded-lg bg-gray-600 text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-                  disabled={isLoading}
-                >
-                  Send
-                </button>
-              </form>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </AuthGuard>
