@@ -24,8 +24,8 @@ The architecture of the **Medical and Health Assistant** project is designed to 
 2. **Backend**: REST API and business logic implemented using Node.js and Express.js.
 3. **Database**: Data storage managed with Supabase, utilizing PostgreSQL.
 4. **Authentication**: User authentication handled by Firebase Auth, including Google Sign-In.
-5. **AI/ML**: Natural Language Processing (NLP) powered by Transformer models.
-6. **Deployment**: Application deployment managed through Supabase.
+5. **AI/ML**: Natural Language Processing (NLP) powered by Transformer models usch as gemini.
+6. **Deployment**: Application deployment managed through Supabase and vercel
 
 ### Workflow
 1. **User Interaction**:
