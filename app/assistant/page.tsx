@@ -12,7 +12,7 @@ import {
 import Navbar from "../components/navbar";
 
 interface Message {
-  id: number;
+  id: string; // Ensure this matches the UUID type from the backend
   text: string;
   sender: "user" | "assistant";
   timestamp: string;
@@ -41,7 +41,13 @@ const Assistant = () => {
   const loadMessages = async (contextId: string, token: string) => {
     try {
       const data = await getMessages(token, contextId);
-      setMessages(data);
+      const formattedMessages = data.map((msg: any) => ({
+        id: msg.id,
+        text: msg.message,
+        sender: msg.sender,
+        timestamp: msg.created_at,
+      }));
+      setMessages(formattedMessages);
     } catch (err) {
       console.error("Error loading messages:", err);
     }
@@ -55,7 +61,7 @@ const Assistant = () => {
     if (!session) return;
 
     const userMsg: Message = {
-      id: Date.now(),
+      id: crypto.randomUUID(),
       text: newMessage,
       sender: "user",
       timestamp: new Date().toISOString(),
@@ -77,7 +83,7 @@ const Assistant = () => {
     const response = await sendGeminiQuery(session.access_token, selectedContext.name, history);
 
     const assistantMsg: Message = {
-      id: Date.now() + 1,
+      id: crypto.randomUUID(),
       text: response,
       sender: "assistant",
       timestamp: new Date().toISOString(),

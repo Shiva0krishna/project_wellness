@@ -64,7 +64,7 @@ router.get("/messages", authenticateUser, async (req, res) => {
       console.error("Error fetching messages:", error);
       return res.status(500).json({ error: "Failed to fetch messages." });
     }
-
+    console.log("Fetched messages:", messages);
     res.status(200).json(messages);
   } catch (error) {
     console.error("Error fetching messages:", error);
