@@ -1,6 +1,7 @@
 const express = require("express");
 const supabase = require("../utils/db");
 const authenticateUser = require("../middleware/auth");
+const axios = require("axios");
 
 const router = express.Router();
 
@@ -64,7 +65,7 @@ router.get("/messages", authenticateUser, async (req, res) => {
       console.error("Error fetching messages:", error);
       return res.status(500).json({ error: "Failed to fetch messages." });
     }
-    console.log("Fetched messages:", messages);
+
     res.status(200).json(messages);
   } catch (error) {
     console.error("Error fetching messages:", error);
@@ -93,5 +94,69 @@ router.post("/messages", authenticateUser, async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+
+// // Generate a personalized response using Gemini API
+// router.post("/generate-response", authenticateUser, async (req, res) => {
+//   const userId = req.user.id;
+//   const { contextId, userMessage } = req.body;
+
+//   try {
+//     // Fetch the context name
+//     const { data: context, error: contextError } = await supabase
+//       .from("chat_contexts")
+//       .select("name")
+//       .eq("id", contextId)
+//       .maybeSingle();
+
+//     if (contextError || !context) {
+//       console.error("Error fetching context:", contextError);
+//       return res.status(404).json({ error: "Context not found." });
+//     }
+
+//     // Fetch user-specific data based on the context
+//     let userData = "";
+//     if (context.name === "Calorie Tracking") {
+//       const calorieResponse = await router.handle({ method: "GET", query: { userId } }, res);
+//       userData = `Recent calorie data: ${JSON.stringify(calorieResponse)}`;
+//     } else if (context.name === "Sleep Tracking") {
+//       const sleepResponse = await router.handle({ method: "GET", query: { userId } }, res);
+//       userData = `Recent sleep data: ${JSON.stringify(sleepResponse)}`;
+//     } else if (context.name === "Weight Management") {
+//       const weightResponse = await router.handle({ method: "GET", query: { userId } }, res);
+//       userData = `Recent weight data: ${JSON.stringify(weightResponse)}`;
+//     }
+
+//     // Combine user data and user message for the Gemini API
+//     const prompt = `Context: ${context.name}\nUser Data: ${userData}\nUser Message: ${userMessage}`;
+
+//     // Call the Gemini API
+//     const geminiResponse = await axios.post(
+//       process.env.GEMINI_API_URL,
+//       { prompt },
+//       { headers: { Authorization: `Bearer ${process.env.GEMINI_API_KEY}` } }
+//     );
+
+//     const assistantMessage = geminiResponse.data.response;
+
+//     // Save the assistant's response in the database
+//     const { data: savedMessage, error: saveError } = await supabase
+//       .from("chat_messages")
+//       .insert({
+//         context_id: contextId,
+//         sender: "assistant",
+//         message: assistantMessage,
+//       })
+//       .select();
+
+//     if (saveError) {
+//       console.error("Error saving assistant message:", saveError);
+//     }
+
+//     res.status(200).json({ response: assistantMessage });
+//   } catch (error) {
+//     console.error("Error generating response:", error);
+//     res.status(500).json({ error: "Internal Server Error" });
+//   }
+// });
 
 module.exports = router;
