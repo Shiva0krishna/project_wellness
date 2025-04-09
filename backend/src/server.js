@@ -23,5 +23,8 @@ app.use('/api/gemini', geminiRoutes);
 const assistantRoutes = require('./routes/assistant');
 app.use('/api/assistant', assistantRoutes);
 
+const nutritionRoutes = require('./routes/nutrition');
+app.use('/api/nutrition', nutritionRoutes);
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

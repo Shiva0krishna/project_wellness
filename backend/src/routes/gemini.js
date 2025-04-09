@@ -35,13 +35,10 @@ router.post("/query", async (req, res) => {
       .eq("user_id", userId)
       .single();
 
-    if (profileError) {
-      console.error("Error fetching user profile:", profileError);
-    } else {
-      console.log("User Profile:", userProfile);
-    }
+    if (profileError) console.error("Error fetching user profile:", profileError);
+    else console.log("User Profile:", userProfile);
 
-    // 💬 Fetch chat messages
+    // 💬 Fetch recent chat messages
     const { data: messages } = await supabase
       .from("chat_messages")
       .select("sender, message")
@@ -49,73 +46,81 @@ router.post("/query", async (req, res) => {
       .order("created_at", { ascending: false })
       .limit(10);
 
-    console.log("Chat History:", messages);
-
     const conversationHistory = messages?.reverse()
       .map(m => `${m.sender === "user" ? "User" : "Assistant"}: ${m.message}`)
       .join("\n") || "No conversation history.";
 
-    // 📊 Context logs
-    let userContextData = "No specific data available for this context.";
+    // 📊 Fetch all logs (Calorie, Sleep, Weight, Diet, Medical History)
+    const [calorieRes, sleepRes, weightRes, dietRes, medicalHistoryRes, medicalQueriesRes] = await Promise.all([
+      supabase.from("daily_calories").select("*").eq("user_id", userId).order("date", { ascending: false }).limit(5),
+      supabase.from("sleep_tracking").select("*").eq("user_id", userId).order("date", { ascending: false }).limit(5),
+      supabase.from("weight_tracking").select("*").eq("user_id", userId).order("date", { ascending: false }).limit(5),
+      supabase.from("diet_logs").select("*").eq("user_id", userId).order("date", { ascending: false }).limit(5),
+      supabase.from("medical_history").select("*").eq("user_id", userId).order("diagnosis_date", { ascending: false }),
+      supabase.from("medical_queries").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(5)
+    ]);
 
-    if (context === "Calorie Tracking") {
-      const { data: logs, error: calorieError } = await supabase
-        .from("daily_calories")
-        .select("*")
-        .eq("user_id", userId)
-        .order("date", { ascending: false })
-        .limit(5);
+    const calorieLogs = calorieRes.data || [];
+    const sleepLogs = sleepRes.data || [];
+    const weightLogs = weightRes.data || [];
+    const dietLogs = dietRes.data || [];
+    const medicalHistory = medicalHistoryRes.data || [];
+    const medicalQueries = medicalQueriesRes.data || [];
 
-      if (calorieError) {
-        console.error("Error fetching calorie logs:", calorieError);
-      } else {
-        console.log("Calorie Logs:", logs);
-      }
-    
-      userContextData = logs?.map(c =>
-        `• ${c.date}: Consumed ${c.calories_consumed}, Burned ${c.calories_burned}, Net ${c.net_calories}`
-      ).join("\n") || userContextData;
-    } else if (context === "Sleep Tracking") {
-      const { data: logs } = await supabase
-        .from("sleep_tracking")
-        .select("*")
-        .eq("user_id", userId)
-        .order("date", { ascending: false })
-        .limit(5);
+    // 🧠 Format context data
+    const calorieData = calorieLogs.map(c =>
+      `• ${c.date}: Consumed ${c.calories_consumed}, Burned ${c.calories_burned}, Net ${c.net_calories}`
+    ).join("\n");
 
-      console.log("Sleep Logs:", logs);
+    const sleepData = sleepLogs.map(s => 
+      `• ${s.date}: Slept for ${s.sleep_duration} hours, Quality: ${s.sleep_quality || 'Not recorded'}`
+    ).join("\n");
 
-      userContextData = logs?.map(s =>
-        `• ${s.date}: Slept for ${s.hours_slept} hours`
-      ).join("\n") || userContextData;
+    const weightData = weightLogs.map(w => 
+      `• ${w.date}: Weight = ${w.weight} kg`
+    ).join("\n");
 
-    } else if (context === "Weight Management") {
-      const { data: logs } = await supabase
-        .from("weight_tracking")
-        .select("*")
-        .eq("user_id", userId)
-        .order("date", { ascending: false })
-        .limit(5);
+    const dietData = dietLogs.map(d => 
+      `• ${d.date} - ${d.meal}: ${d.food_items} (${d.total_calories} calories)`
+    ).join("\n");
 
-      console.log("Weight Logs:", logs);
+    const medicalHistoryData = medicalHistory.map(m => 
+      `• ${m.condition} (Diagnosed: ${m.diagnosis_date}): ${m.treatment || 'No treatment'}, Medications: ${m.medications || 'None'}`
+    ).join("\n");
 
-      userContextData = logs?.map(w =>
-        `• ${w.date}: Weight = ${w.weight} kg`
-      ).join("\n") || userContextData;
-    }
+    const medicalQueriesData = medicalQueries.map(q => 
+      `• Query: ${q.query}\n  Response: ${q.response || 'No response yet'}`
+    ).join("\n");
 
-    // 📦 Construct final prompt
+    // 📦 Final prompt
     const userData = `
 User Profile:
 - Name: ${userProfile?.name || "N/A"}
 - Gender: ${userProfile?.gender || "N/A"}
-- Age: ${userProfile?.dob || "N/A"}
+- Age: ${userProfile?.dob ? new Date().getFullYear() - new Date(userProfile.dob).getFullYear() : "N/A"}
 - Height: ${userProfile?.height_cm || "N/A"} cm
 - Weight: ${userProfile?.weight_kg || "N/A"} kg
 - Target Weight: ${userProfile?.target_weight_kg || "N/A"} kg
+- Activity Level: ${userProfile?.activity_level || "N/A"}
+- Sleep Hours: ${userProfile?.sleep_hours || "N/A"}
 
-${context} Logs:
-${userContextData}
+Calorie Tracking:
+${calorieData}
+
+Sleep Tracking:
+${sleepData}
+
+Weight Management:
+${weightData}
+
+Diet Logs:
+${dietData}
+
+Medical History:
+${medicalHistoryData}
+
+Medical Queries:
+${medicalQueriesData}
 
 Conversation History:
 ${conversationHistory}
@@ -129,7 +134,7 @@ ${conversationHistory}
           role: "user",
           parts: [
             {
-              text: `You are given the following health-related context:\n${userData}\n and ${userContextData}\nNow respond to the user's query:\n"${query}"\n\nBe concise, medium-length, and use bullet points when possible.`,
+              text: `You are given the following health-related context:\n${userData}\n\nNow respond to the user's query:\n"${query}"\n\nBe concise, small to medium-length, and use bullet points when possible.`,
             }
           ]
         }
