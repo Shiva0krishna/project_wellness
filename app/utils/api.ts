@@ -20,6 +20,25 @@ const sendRequest = async (endpoint: string, method: string, token: string, body
   return response.json();
 };
 
+// Helper function to send multipart form data requests (for file uploads)
+const sendMultipartRequest = async (endpoint: string, method: string, token: string, formData: FormData) => {
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${token}`,
+  };
+
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    method,
+    headers,
+    body: formData,
+  });
+
+  if (!response.ok) {
+    throw new Error(`Error: ${response.statusText}`);
+  }
+
+  return response.json();
+};
+
 // Fetch user profile
 export const fetchUserProfile = async (token: string) => {
   return sendRequest("/user/profile", "GET", token);
@@ -88,4 +107,22 @@ export const addMessage = async (
   messageData: { contextId: string; sender: string; message: string }
 ) => {
   return sendRequest("/assistant/messages", "POST", token, messageData);
+};
+
+// Nutrition: Analyze food text for nutritional content
+export const analyzeNutritionText = async (token: string, foodText: string) => {
+  const response = await fetch(`${API_BASE_URL}/nutrition/analyze-text`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ foodText })
+  });
+
+  if (!response.ok) {
+    throw new Error(`Error: ${response.statusText}`);
+  }
+
+  return response.json();
 };

@@ -10,18 +10,51 @@ import {
   createContext as createNewContext,
 } from "../utils/api";
 import Navbar from "../components/navbar";
+import ReactMarkdown from 'react-markdown';
 
 interface Message {
   id: string; // Ensure this matches the UUID type from the backend
   text: string;
   sender: "user" | "assistant";
   timestamp: string;
+  isTyping?: boolean; // Flag to indicate if message is still being typed
 }
 
 interface Context {
   id: string;
   name: string;
 }
+
+// Animated text component for typing effect
+const AnimatedText = ({ text, isTyping }: { text: string; isTyping: boolean }) => {
+  const [displayedText, setDisplayedText] = useState("");
+  const [currentIndex, setCurrentIndex] = useState(0);
+  
+  useEffect(() => {
+    if (isTyping) {
+      if (currentIndex < text.length) {
+        const timer = setTimeout(() => {
+          setDisplayedText(prev => prev + text[currentIndex]);
+          setCurrentIndex(prev => prev + 1);
+        }, 20); // Adjust speed as needed
+        return () => clearTimeout(timer);
+      }
+    } else {
+      // If not typing, show full text immediately
+      setDisplayedText(text);
+      setCurrentIndex(text.length);
+    }
+  }, [currentIndex, text, isTyping]);
+  
+  return (
+    <div className="prose prose-invert max-w-none">
+      <ReactMarkdown>{displayedText}</ReactMarkdown>
+      {isTyping && currentIndex < text.length && (
+        <span className="inline-block w-2 h-4 ml-1 bg-gray-400 animate-pulse"></span>
+      )}
+    </div>
+  );
+};
 
 const Assistant = () => {
   const [contexts, setContexts] = useState<Context[]>([]);
@@ -30,13 +63,26 @@ const Assistant = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [showChat, setShowChat] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
 
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Clean up timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const loadMessages = async (contextId: string, token: string) => {
     try {
@@ -46,11 +92,36 @@ const Assistant = () => {
         text: msg.message,
         sender: msg.sender,
         timestamp: msg.created_at,
+        isTyping: false,
       }));
       setMessages(formattedMessages);
     } catch (err) {
       console.error("Error loading messages:", err);
     }
+  };
+
+  const stopGeneration = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = null;
+    }
+    
+    setIsGenerating(false);
+    setIsLoading(false);
+    
+    // Update the last assistant message to show it's complete
+    setMessages(prev => 
+      prev.map(msg => 
+        msg.sender === "assistant" && msg.isTyping 
+          ? { ...msg, isTyping: false } 
+          : msg
+      )
+    );
   };
 
   const handleSendMessage = async (e: React.FormEvent) => {
@@ -65,10 +136,16 @@ const Assistant = () => {
       text: newMessage,
       sender: "user",
       timestamp: new Date().toISOString(),
+      isTyping: false,
     };
 
     setMessages((prev) => [...prev, userMsg]);
     setNewMessage("");
+    setIsLoading(true);
+    setIsGenerating(true);
+
+    // Create a new AbortController for this request
+    abortControllerRef.current = new AbortController();
 
     await addMessage(session.access_token, {
       contextId: selectedContext.id,
@@ -80,22 +157,55 @@ const Assistant = () => {
       .map((m) => `${m.sender === "user" ? "User" : "Assistant"}: ${m.text}`)
       .join("\n");
 
-    const response = await sendGeminiQuery(session.access_token, selectedContext.name, history);
+    try {
+      // Pass the signal to the API function
+      const response = await sendGeminiQuery(
+        session.access_token, 
+        selectedContext.name, 
+        history
+      );
 
-    const assistantMsg: Message = {
-      id: crypto.randomUUID(),
-      text: response,
-      sender: "assistant",
-      timestamp: new Date().toISOString(),
-    };
+      const assistantMsg: Message = {
+        id: crypto.randomUUID(),
+        text: response,
+        sender: "assistant",
+        timestamp: new Date().toISOString(),
+        isTyping: true, // Start with typing animation
+      };
 
-    setMessages((prev) => [...prev, assistantMsg]);
+      setMessages((prev) => [...prev, assistantMsg]);
+      setIsLoading(false);
+      // Keep isGenerating true until typing animation completes
 
-    await addMessage(session.access_token, {
-      contextId: selectedContext.id,
-      sender: assistantMsg.sender,
-      message: assistantMsg.text,
-    });
+      // Simulate typing effect by updating the message after a delay
+      typingTimeoutRef.current = setTimeout(() => {
+        setMessages((prev) => 
+          prev.map(msg => 
+            msg.id === assistantMsg.id 
+              ? { ...msg, isTyping: false } 
+              : msg
+          )
+        );
+        // Only set isGenerating to false after typing animation completes
+        setIsGenerating(false);
+      }, response.length * 20); // Adjust timing based on text length
+
+      await addMessage(session.access_token, {
+        contextId: selectedContext.id,
+        sender: assistantMsg.sender,
+        message: assistantMsg.text,
+      });
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        console.log('Request was aborted');
+      } else {
+        console.error('Error generating response:', error);
+      }
+      setIsGenerating(false);
+      setIsLoading(false);
+    } finally {
+      abortControllerRef.current = null;
+    }
   };
 
   const createContext = async () => {
@@ -213,16 +323,36 @@ const Assistant = () => {
                       className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
                     >
                       <div
-                        className={`max-w-xs p-3 rounded-lg ${
+                        className={`max-w-3xl p-3 rounded-lg ${
                           msg.sender === "user"
                             ? "bg-blue-600 text-white"
                             : "bg-gray-700 text-gray-100"
                         }`}
                       >
-                        {msg.text}
+                        {msg.sender === "assistant" ? (
+                          <AnimatedText 
+                            text={msg.text} 
+                            isTyping={msg.isTyping || false} 
+                          />
+                        ) : (
+                          <div className="prose prose-invert max-w-none">
+                            <ReactMarkdown>{msg.text}</ReactMarkdown>
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
+                  {isLoading && (
+                    <div className="flex justify-start">
+                      <div className="bg-gray-700 text-gray-100 p-3 rounded-lg">
+                        <div className="flex space-x-2">
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></div>
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></div>
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   <div ref={messagesEndRef} />
                 </div>
                 <form onSubmit={handleSendMessage} className="flex gap-2">
@@ -231,13 +361,25 @@ const Assistant = () => {
                     onChange={(e) => setNewMessage(e.target.value)}
                     className="flex-1 p-3 rounded bg-gray-700 text-white focus:outline-none"
                     placeholder="Type a message..."
+                    disabled={isLoading || isGenerating}
                   />
-                  <button
-                    type="submit"
-                    className="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded"
-                  >
-                    Send
-                  </button>
+                  {isGenerating ? (
+                    <button
+                      type="button"
+                      onClick={stopGeneration}
+                      className="bg-red-600 hover:bg-red-700 text-white p-3 rounded"
+                    >
+                      Stop
+                    </button>
+                  ) : (
+                    <button
+                      type="submit"
+                      className="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded disabled:opacity-50"
+                      disabled={isLoading || isGenerating}
+                    >
+                      Send
+                    </button>
+                  )}
                 </form>
               </>
             ) : (

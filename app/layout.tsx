@@ -5,7 +5,8 @@ import { JetBrains_Mono } from "next/font/google";
 const jetbrainsMono = JetBrains_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "FT25",
+  title: "P::Health",
+  description: "Personalized Health and Fitness Assistant",
 };
 
 export default function RootLayout({
