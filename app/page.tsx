@@ -10,9 +10,12 @@ const GrainOverlay = () => {
       <div
         className="absolute inset-0 mix-blend-overlay"
         style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 2056 2056' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.5' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
-          backgroundRepeat: "repeat",
-          backgroundSize: "256px 256px",
+          backgroundImage: `url("/background.png")`, 
+          backgroundRepeat: "no-repeat", 
+          backgroundSize: "150%", 
+          backgroundPosition: "left",
+          transform: "scale(1.5)", 
+          zIndex: 1000,
         }}
       />
       <div
