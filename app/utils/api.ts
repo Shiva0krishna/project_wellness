@@ -156,3 +156,36 @@ export const updateMedicalCondition = async (token: string, id: string, conditio
 export const deleteMedicalCondition = async (token: string, id: string) => {
   return sendRequest(`/medical/history/${id}`, "DELETE", token);
 };
+
+// Nutrition: Log a meal with nutrition data
+export const logNutrition = async (token: string, nutritionData: {
+  date: string;
+  meal: 'Breakfast' | 'Lunch' | 'Dinner' | 'Snack';
+  food_items: string[];
+  total_calories: number;
+  protein_grams?: number;
+  carbs_grams?: number;
+  fat_grams?: number;
+  fiber_grams?: number;
+}) => {
+  return sendRequest("/nutrition/log", "POST", token, nutritionData);
+};
+
+// Nutrition: Fetch user's nutrition logs
+export const fetchNutritionLogs = async (token: string, startDate?: string, endDate?: string) => {
+  let endpoint = "/nutrition/logs";
+  if (startDate && endDate) {
+    endpoint += `?startDate=${startDate}&endDate=${endDate}`;
+  }
+  return sendRequest(endpoint, "GET", token);
+};
+
+// Nutrition: Delete a nutrition log
+export const deleteNutritionLog = async (token: string, logId: string) => {
+  return sendRequest(`/nutrition/logs/${logId}`, "DELETE", token);
+};
+
+// Assistant: Delete a context
+export const deleteContext = async (token: string, contextName: string) => {
+  return sendRequest(`/assistant/contexts/${encodeURIComponent(contextName)}`, "DELETE", token);
+};

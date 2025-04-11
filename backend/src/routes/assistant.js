@@ -159,4 +159,46 @@ router.post("/messages", authenticateUser, async (req, res) => {
 //   }
 // });
 
+// Delete a context
+router.delete('/contexts/:name', authenticateUser, async (req, res) => {
+  try {
+    const { name } = req.params;
+    const decodedName = decodeURIComponent(name);
+
+    // First check if the context belongs to the user
+    const { data: existingData, error: fetchError } = await supabase
+      .from('chat_contexts')
+      .select('*')
+      .eq('name', decodedName)
+      .eq('user_id', req.user.id)
+      .single();
+
+    if (fetchError || !existingData) {
+      return res.status(404).json({ error: 'Context not found' });
+    }
+
+    // Delete all messages associated with this context
+    const { error: messagesError } = await supabase
+      .from('chat_messages')
+      .delete()
+      .eq('context_id', existingData.id);
+
+    if (messagesError) throw messagesError;
+
+    // Delete the context
+    const { error } = await supabase
+      .from('chat_contexts')
+      .delete()
+      .eq('name', decodedName)
+      .eq('user_id', req.user.id);
+
+    if (error) throw error;
+
+    res.status(204).send();
+  } catch (error) {
+    console.error('Error deleting context:', error);
+    res.status(500).json({ error: 'Failed to delete context' });
+  }
+});
+
 module.exports = router;

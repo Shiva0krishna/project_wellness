@@ -2,9 +2,11 @@ const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 require('dotenv').config();
+const authenticateUser = require("../middleware/auth");
+const supabase = require("../utils/db");
 
 // Analyze nutrition from text description
-router.post('/analyze-text', async (req, res) => {
+router.post('/analyze-text',authenticateUser, async (req, res) => {
   try {
     const { foodText } = req.body;
     
@@ -96,10 +98,125 @@ router.post('/analyze-text', async (req, res) => {
 });
 
 // Alias for backward compatibility
-router.post('/analyze', async (req, res) => {
+router.post('/analyze',authenticateUser, async (req, res) => {
   // Forward to the text analysis endpoint
   req.body.foodText = req.body.foodText || "No food items provided";
   return router._router.handle(req, res);
+});
+
+// Log a meal with nutrition data
+router.post('/log', authenticateUser, async (req, res) => {
+  try {
+    const { 
+      date, 
+      meal, 
+      food_items, 
+      total_calories, 
+      protein_grams, 
+      carbs_grams, 
+      fat_grams, 
+      fiber_grams 
+    } = req.body;
+
+    // Validate required fields
+    if (!date || !meal || !food_items || !total_calories) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Validate meal type
+    const validMeals = ['Breakfast', 'Lunch', 'Dinner', 'Snack'];
+    if (!validMeals.includes(meal)) {
+      return res.status(400).json({ error: 'Invalid meal type' });
+    }
+
+    // Insert into nutrition_logs table
+    const { data, error } = await supabase
+      .from('nutrition_logs')
+      .insert([
+        {
+          user_id: req.user.id,
+          date,
+          meal,
+          food_items,
+          total_calories,
+          protein_grams,
+          carbs_grams,
+          fat_grams,
+          fiber_grams
+        }
+      ])
+      .select();
+
+    if (error) throw error;
+
+    res.status(201).json(data[0]);
+  } catch (error) {
+    console.error('Error logging nutrition:', error);
+    res.status(500).json({ error: 'Failed to log nutrition data' });
+  }
+});
+
+// Get user's nutrition logs
+router.get('/logs', authenticateUser, async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    
+    let query = supabase
+      .from('nutrition_logs')
+      .select('*')
+      .eq('user_id', req.user.id)
+      .order('date', { ascending: false });
+    
+    // Apply date filters if provided
+    if (startDate) {
+      query = query.gte('date', startDate);
+    }
+    
+    if (endDate) {
+      query = query.lte('date', endDate);
+    }
+    
+    const { data, error } = await query;
+
+    if (error) throw error;
+
+    res.json(data);
+  } catch (error) {
+    console.error('Error fetching nutrition logs:', error);
+    res.status(500).json({ error: 'Failed to fetch nutrition logs' });
+  }
+});
+
+// Delete a nutrition log
+router.delete('/logs/:id', authenticateUser, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // First check if the log belongs to the user
+    const { data: existingData, error: fetchError } = await supabase
+      .from('nutrition_logs')
+      .select('*')
+      .eq('id', id)
+      .eq('user_id', req.user.id)
+      .single();
+
+    if (fetchError || !existingData) {
+      return res.status(404).json({ error: 'Nutrition log not found' });
+    }
+
+    const { error } = await supabase
+      .from('nutrition_logs')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', req.user.id);
+
+    if (error) throw error;
+
+    res.status(204).send();
+  } catch (error) {
+    console.error('Error deleting nutrition log:', error);
+    res.status(500).json({ error: 'Failed to delete nutrition log' });
+  }
 });
 
 module.exports = router;
