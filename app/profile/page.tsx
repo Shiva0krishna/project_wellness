@@ -5,11 +5,20 @@ import Navbar from "../components/navbar";
 import Footer from "../components/footer";
 import AuthGuard from "../utils/authGuard";
 import { supabase } from "../utils/supabaseClient";
-import { updateUserProfile, fetchUserProfile } from "../utils/api";
+import { 
+  updateUserProfile, 
+  fetchUserProfile, 
+  fetchMedicalHistory, 
+  addMedicalCondition, 
+  updateMedicalCondition, 
+  deleteMedicalCondition 
+} from "../utils/api";
 
 const ProfilePage = () => {
   const [isEditing, setIsEditing] = useState(false);
+  const [isEditingMedical, setIsEditingMedical] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [medicalHistory, setMedicalHistory] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     name: "",
     gender: "",
@@ -20,6 +29,13 @@ const ProfilePage = () => {
     activity_level: "",
     sleep_hours: "",
   });
+  const [medicalFormData, setMedicalFormData] = useState({
+    condition: "",
+    diagnosis_date: "",
+    treatment: "",
+    medications: "",
+  });
+  const [editingMedicalId, setEditingMedicalId] = useState<string | null>(null);
 
   const router = useRouter();
 
@@ -41,6 +57,10 @@ const ProfilePage = () => {
           activity_level: profileData?.activity_level || "",
           sleep_hours: profileData?.sleep_hours || "",
         });
+
+        // Fetch medical history
+        const medicalData = await fetchMedicalHistory(session.access_token);
+        setMedicalHistory(medicalData || []);
       } else {
         router.push("/login");
       }
@@ -52,9 +72,38 @@ const ProfilePage = () => {
     setIsEditing(!isEditing);
   };
 
+  const toggleMedicalEdit = (id?: string) => {
+    if (id) {
+      setEditingMedicalId(id);
+      const condition = medicalHistory.find(item => item.id === id);
+      if (condition) {
+        setMedicalFormData({
+          condition: condition.condition,
+          diagnosis_date: condition.diagnosis_date,
+          treatment: condition.treatment || "",
+          medications: condition.medications || "",
+        });
+      }
+    } else {
+      setEditingMedicalId(null);
+      setMedicalFormData({
+        condition: "",
+        diagnosis_date: "",
+        treatment: "",
+        medications: "",
+      });
+    }
+    setIsEditingMedical(!isEditingMedical);
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleMedicalChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setMedicalFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSave = async () => {
@@ -74,6 +123,49 @@ const ProfilePage = () => {
       } else {
         console.error("Failed to update profile:", error);
       }
+    }
+  };
+
+  const handleSaveMedical = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        router.push("/login");
+        return;
+      }
+
+      if (editingMedicalId) {
+        await updateMedicalCondition(session.access_token, editingMedicalId, medicalFormData);
+      } else {
+        await addMedicalCondition(session.access_token, medicalFormData);
+      }
+      
+      // Refresh medical history
+      const medicalData = await fetchMedicalHistory(session.access_token);
+      setMedicalHistory(medicalData || []);
+      
+      setIsEditingMedical(false);
+      setEditingMedicalId(null);
+    } catch (error) {
+      console.error("Failed to update medical history:", error);
+    }
+  };
+
+  const handleDeleteMedical = async (id: string) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        router.push("/login");
+        return;
+      }
+
+      await deleteMedicalCondition(session.access_token, id);
+      
+      // Refresh medical history
+      const medicalData = await fetchMedicalHistory(session.access_token);
+      setMedicalHistory(medicalData || []);
+    } catch (error) {
+      console.error("Failed to delete medical condition:", error);
     }
   };
 
@@ -162,6 +254,118 @@ const ProfilePage = () => {
               </div>
             </form>
           )}
+
+          {/* Medical History Section */}
+          <div className="mt-12 border-t border-gray-700 pt-8">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-semibold">Medical History</h2>
+              {!isEditingMedical && (
+                <button
+                  onClick={() => toggleMedicalEdit()}
+                  className="py-2 px-4 bg-blue-500 rounded hover:bg-blue-600 transition"
+                >
+                  Add Medical Condition
+                </button>
+              )}
+            </div>
+
+            {isEditingMedical ? (
+              <form className="space-y-6 bg-gray-700 p-6 rounded-lg">
+                <h3 className="text-xl font-semibold mb-4">
+                  {editingMedicalId ? "Edit Medical Condition" : "Add Medical Condition"}
+                </h3>
+
+                <input
+                  type="text"
+                  name="condition"
+                  value={medicalFormData.condition}
+                  onChange={handleMedicalChange}
+                  placeholder="Medical Condition"
+                  className="w-full p-2 rounded bg-gray-600 text-white"
+                  required
+                />
+
+                <input
+                  type="date"
+                  name="diagnosis_date"
+                  value={medicalFormData.diagnosis_date}
+                  onChange={handleMedicalChange}
+                  className="w-full p-2 rounded bg-gray-600 text-white"
+                  required
+                />
+
+                <textarea
+                  name="treatment"
+                  value={medicalFormData.treatment}
+                  onChange={handleMedicalChange}
+                  placeholder="Treatment (optional)"
+                  className="w-full p-2 rounded bg-gray-600 text-white h-24"
+                />
+
+                <textarea
+                  name="medications"
+                  value={medicalFormData.medications}
+                  onChange={handleMedicalChange}
+                  placeholder="Medications (optional)"
+                  className="w-full p-2 rounded bg-gray-600 text-white h-24"
+                />
+
+                <div className="flex justify-between">
+                  <button
+                    type="button"
+                    onClick={handleSaveMedical}
+                    className="py-2 px-4 bg-green-500 rounded hover:bg-green-600 transition"
+                  >
+                    Save
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => toggleMedicalEdit()}
+                    className="py-2 px-4 bg-red-500 rounded hover:bg-red-600 transition"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className="space-y-4">
+                {medicalHistory.length === 0 ? (
+                  <p className="text-gray-400 text-center py-4">No medical conditions recorded</p>
+                ) : (
+                  medicalHistory.map((condition) => (
+                    <div key={condition.id} className="bg-gray-700 p-4 rounded-lg">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h3 className="text-lg font-semibold">{condition.condition}</h3>
+                          <p className="text-gray-300">Diagnosed: {new Date(condition.diagnosis_date).toLocaleDateString()}</p>
+                          {condition.treatment && (
+                            <p className="mt-2"><strong>Treatment:</strong> {condition.treatment}</p>
+                          )}
+                          {condition.medications && (
+                            <p className="mt-1"><strong>Medications:</strong> {condition.medications}</p>
+                          )}
+                        </div>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => toggleMedicalEdit(condition.id)}
+                            className="py-1 px-3 bg-blue-500 rounded hover:bg-blue-600 transition text-sm"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteMedical(condition.id)}
+                            className="py-1 px-3 bg-red-500 rounded hover:bg-red-600 transition text-sm"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
       <Footer />

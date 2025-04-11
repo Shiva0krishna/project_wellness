@@ -126,3 +126,33 @@ export const analyzeNutritionText = async (token: string, foodText: string) => {
 
   return response.json();
 };
+
+// Medical History: Fetch user's medical history
+export const fetchMedicalHistory = async (token: string) => {
+  return sendRequest("/medical/history", "GET", token);
+};
+
+// Medical History: Add a new medical condition
+export const addMedicalCondition = async (token: string, conditionData: {
+  condition: string;
+  diagnosis_date: string;
+  treatment?: string;
+  medications?: string;
+}) => {
+  return sendRequest("/medical/history", "POST", token, conditionData);
+};
+
+// Medical History: Update a medical condition
+export const updateMedicalCondition = async (token: string, id: string, conditionData: {
+  condition: string;
+  diagnosis_date: string;
+  treatment?: string;
+  medications?: string;
+}) => {
+  return sendRequest(`/medical/history/${id}`, "PUT", token, conditionData);
+};
+
+// Medical History: Delete a medical condition
+export const deleteMedicalCondition = async (token: string, id: string) => {
+  return sendRequest(`/medical/history/${id}`, "DELETE", token);
+};
