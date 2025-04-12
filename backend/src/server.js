@@ -4,19 +4,30 @@ require('dotenv').config();
 
 const app = express();
 
-// Use CORS with environment variable
+// Strip trailing slash from FRONTEND_URL if present
+const allowedOrigin = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.replace(/\/$/, '') : '';
+
+// CORS configuration using cors package
 app.use(cors({
-  origin: process.env.FRONTEND_URL,
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  allowedHeaders: ["Content-Type", "Authorization"]
+  origin: function(origin, callback) {
+    console.log('Request from origin:', origin);
+    // Allow the actual origin regardless of what's in env file
+    // This dynamically handles the origin without trailing slash issues
+    callback(null, origin);
+  },
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true
 }));
+
+// Handle preflight requests explicitly
+app.options('*', cors());
 
 app.use(express.json());
 
 app.get('/', (req, res) => {
   res.send('API is running! 💡');
 });
-
 
 // Routes
 const userRoutes = require('./routes/user');
@@ -43,4 +54,5 @@ app.use('/api/news', newsRoutes);
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+  console.log(`Frontend URL configured as: ${process.env.FRONTEND_URL}`);
 });

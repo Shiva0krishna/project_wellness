@@ -1,4 +1,4 @@
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/api";
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
 
 // Helper function to send API requests
 const sendRequest = async (endpoint: string, method: string, token: string, body?: any) => {
@@ -7,18 +7,21 @@ const sendRequest = async (endpoint: string, method: string, token: string, body
     Authorization: `Bearer ${token}`,
   };
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+  const response = await fetch(`${API_BASE_URL}/api${endpoint}`, {
     method,
     headers,
+    credentials: 'include', 
     body: body ? JSON.stringify(body) : undefined,
   });
 
   if (!response.ok) {
-    throw new Error(`Error: ${response.statusText}`);
+    const errorText = await response.text();
+    throw new Error(`Error: ${response.status} - ${errorText || response.statusText}`);
   }
 
   return response.json();
 };
+
 
 // Helper function to send multipart form data requests (for file uploads)
 const sendMultipartRequest = async (endpoint: string, method: string, token: string, formData: FormData) => {
