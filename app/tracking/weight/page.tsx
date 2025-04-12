@@ -6,8 +6,10 @@ import Footer from "../../components/footer";
 import AuthGuard from "../../utils/authGuard";
 import MetricsCard from "../../components/metrics_card/metrics_card";
 import Modal from "../../components/modal/modal";
+import TrackingSections from "../../components/tracking_sections";
 import { fetchWeightData, addWeightData } from "../../utils/api";
 import { supabase } from "../../utils/supabaseClient";
+import { useRouter } from "next/navigation";
 
 type WeightMetric = {
   day: string;
@@ -15,6 +17,7 @@ type WeightMetric = {
 };
 
 const WeightTracking = () => {
+  const router = useRouter();
   const [weightMetrics, setWeightMetrics] = useState<WeightMetric[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -68,6 +71,10 @@ const WeightTracking = () => {
     }
   };
 
+  const handleBack = () => {
+    router.push("/track_activity");
+  };
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -75,8 +82,16 @@ const WeightTracking = () => {
   return (
     <AuthGuard>
       <Navbar />
-      <div className="min-h-screen bg-gray-900 text-white p-6">
-        <h1 className="text-3xl font-bold mb-8">Weight Tracking</h1>
+      <div className="min-h-screen bg-gray-900 text-white p-6 pt-20 md:pt-6">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold">Weight Tracking</h1>
+          <button 
+            onClick={handleBack}
+            className="md:hidden bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded"
+          >
+            Back
+          </button>
+        </div>
         
         {error && (
           <div className="bg-red-600/20 border border-red-500 p-4 rounded mb-4">
@@ -84,18 +99,27 @@ const WeightTracking = () => {
           </div>
         )}
 
-        {loading ? (
-          <div className="animate-pulse bg-gray-800 rounded-lg h-96" />
-        ) : (
-          <MetricsCard
-            title="Weight Tracking"
-            subtitle="Body Metrics"
-            description="Track your weight changes over time"
-            metrics={weightMetrics}
-            primaryMetric="weight"
-            unit="kg"
-          />
-        )}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2">
+            {loading ? (
+              <div className="animate-pulse bg-gray-800 rounded-lg h-96" />
+            ) : (
+              <MetricsCard
+                title="Weight Tracking"
+                subtitle="Body Metrics"
+                description="Track your weight changes over time"
+                metrics={weightMetrics}
+                primaryMetric="weight"
+                unit="kg"
+              />
+            )}
+          </div>
+          
+          <div className="hidden lg:block">
+            <h2 className="text-xl font-semibold mb-4">Other Tracking Options</h2>
+            <TrackingSections currentSection="weight" />
+          </div>
+        </div>
 
         <button
           onClick={() => setIsModalOpen(true)}

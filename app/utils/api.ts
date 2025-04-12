@@ -189,3 +189,8 @@ export const deleteNutritionLog = async (token: string, logId: string) => {
 export const deleteContext = async (token: string, contextName: string) => {
   return sendRequest(`/assistant/contexts/${encodeURIComponent(contextName)}`, "DELETE", token);
 };
+
+// News: Fetch health news
+export const fetchHealthNews = async () => {
+  return sendRequest("/news/health", "GET", "");
+};

@@ -6,18 +6,27 @@ import Footer from "../../components/footer";
 import AuthGuard from "../../utils/authGuard";
 import MetricsCard from "../../components/metrics_card/metrics_card";
 import Modal from "../../components/modal/modal";
+import TrackingSections from "../../components/tracking_sections";
 import { fetchSleepData, addSleepData } from "../../utils/api";
 import { supabase } from "../../utils/supabaseClient";
+import { useRouter } from "next/navigation";
+
+type SleepMetric = {
+  day: string;
+  sleep: number;
+  quality: string;
+};
 
 const SleepTracking = () => {
-  const [sleepMetrics, setSleepMetrics] = useState<{ day: string; sleep: number; quality: string }[]>([]);
+  const router = useRouter();
+  const [sleepMetrics, setSleepMetrics] = useState<SleepMetric[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [formData, setFormData] = useState({
-    date: "",
-    sleep_duration: "",
-    sleep_quality: ""
+  const [formData, setFormData] = useState({ 
+    date: "", 
+    sleep_duration: "", 
+    sleep_quality: "" 
   });
 
   const fetchData = async () => {
@@ -46,11 +55,20 @@ const SleepTracking = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.date || !formData.sleep_duration || !formData.sleep_quality) {
+      setError("Please fill in all fields");
+      return;
+    }
+
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("No active session");
 
-      await addSleepData(session.access_token, formData);
+      await addSleepData(session.access_token, {
+        date: formData.date,
+        sleep_duration: parseFloat(formData.sleep_duration),
+        sleep_quality: formData.sleep_quality
+      });
       setIsModalOpen(false);
       setFormData({ date: "", sleep_duration: "", sleep_quality: "" });
       await fetchData();
@@ -60,6 +78,10 @@ const SleepTracking = () => {
     }
   };
 
+  const handleBack = () => {
+    router.push("/track_activity");
+  };
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -67,8 +89,16 @@ const SleepTracking = () => {
   return (
     <AuthGuard>
       <Navbar />
-      <div className="min-h-screen bg-gray-900 text-white p-6">
-        <h1 className="text-3xl font-bold mb-8">Sleep Tracking</h1>
+      <div className="min-h-screen bg-gray-900 text-white p-6 pt-20 md:pt-6">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold">Sleep Tracking</h1>
+          <button 
+            onClick={handleBack}
+            className="md:hidden bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded"
+          >
+            Back
+          </button>
+        </div>
         
         {error && (
           <div className="bg-red-600/20 border border-red-500 p-4 rounded mb-4">
@@ -76,22 +106,32 @@ const SleepTracking = () => {
           </div>
         )}
 
-        {loading ? (
-          <div className="animate-pulse bg-gray-800 rounded-lg h-96" />
-        ) : (
-          <MetricsCard
-            title="Sleep Duration"
-            subtitle="Daily Sleep Metrics"
-            description="Track your sleep duration and quality over time"
-            metrics={sleepMetrics}
-            primaryMetric="sleep"
-            unit="hours"
-          />
-        )}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2">
+            {loading ? (
+              <div className="animate-pulse bg-gray-800 rounded-lg h-96" />
+            ) : (
+              <MetricsCard
+                title="Sleep Tracking"
+                subtitle="Sleep Metrics"
+                description="Track your sleep duration and quality"
+                metrics={sleepMetrics}
+                primaryMetric="sleep"
+                secondaryMetric="quality"
+                unit="hours"
+              />
+            )}
+          </div>
+          
+          <div className="hidden lg:block">
+            <h2 className="text-xl font-semibold mb-4">Other Tracking Options</h2>
+            <TrackingSections currentSection="sleep" />
+          </div>
+        </div>
 
         <button
           onClick={() => setIsModalOpen(true)}
-          className="fixed bottom-6 right-6 bg-blue-600 p-4 rounded-full shadow-lg"
+          className="fixed bottom-6 right-6 bg-blue-600 p-4 rounded-full shadow-lg hover:bg-blue-700"
         >
           +
         </button>
@@ -107,7 +147,7 @@ const SleepTracking = () => {
                 required
                 value={formData.date}
                 onChange={e => setFormData(prev => ({ ...prev, date: e.target.value }))}
-                className="w-full p-2 rounded bg-gray-700"
+                className="w-full p-2 rounded bg-gray-700 text-white"
               />
             </div>
 
@@ -121,7 +161,7 @@ const SleepTracking = () => {
                 max="24"
                 value={formData.sleep_duration}
                 onChange={e => setFormData(prev => ({ ...prev, sleep_duration: e.target.value }))}
-                className="w-full p-2 rounded bg-gray-700"
+                className="w-full p-2 rounded bg-gray-700 text-white"
               />
             </div>
 
@@ -131,7 +171,7 @@ const SleepTracking = () => {
                 required
                 value={formData.sleep_quality}
                 onChange={e => setFormData(prev => ({ ...prev, sleep_quality: e.target.value }))}
-                className="w-full p-2 rounded bg-gray-700"
+                className="w-full p-2 rounded bg-gray-700 text-white"
               >
                 <option value="">Select quality</option>
                 <option value="Poor">Poor</option>

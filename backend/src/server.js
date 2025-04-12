@@ -29,5 +29,8 @@ app.use('/api/nutrition', nutritionRoutes);
 const medicalRoutes = require('./routes/medical');
 app.use('/api/medical', medicalRoutes);
 
+const newsRoutes = require('./routes/news');
+app.use('/api/news', newsRoutes);
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

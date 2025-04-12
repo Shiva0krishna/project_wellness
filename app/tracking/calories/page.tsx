@@ -6,18 +6,27 @@ import Footer from "../../components/footer";
 import AuthGuard from "../../utils/authGuard";
 import MetricsCard from "../../components/metrics_card/metrics_card";
 import Modal from "../../components/modal/modal";
+import TrackingSections from "../../components/tracking_sections";
 import { fetchCalorieData, addCalorieData } from "../../utils/api";
 import { supabase } from "../../utils/supabaseClient";
+import { useRouter } from "next/navigation";
+
+type CalorieMetric = {
+  day: string;
+  consumed: number;
+  burned: number;
+};
 
 const CaloriesTracking = () => {
-  const [calorieMetrics, setCalorieMetrics] = useState<{ day: string; consumed: number; burned: number; }[]>([]);
+  const router = useRouter();
+  const [calorieMetrics, setCalorieMetrics] = useState<CalorieMetric[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [formData, setFormData] = useState({
-    date: "",
-    calories_consumed: "",
-    calories_burned: ""
+  const [formData, setFormData] = useState({ 
+    date: "", 
+    calories_consumed: "", 
+    calories_burned: "" 
   });
 
   const fetchData = async () => {
@@ -46,11 +55,20 @@ const CaloriesTracking = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.date || !formData.calories_consumed || !formData.calories_burned) {
+      setError("Please fill in all fields");
+      return;
+    }
+
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("No active session");
 
-      await addCalorieData(session.access_token, formData);
+      await addCalorieData(session.access_token, {
+        date: formData.date,
+        calories_consumed: parseInt(formData.calories_consumed),
+        calories_burned: parseInt(formData.calories_burned)
+      });
       setIsModalOpen(false);
       setFormData({ date: "", calories_consumed: "", calories_burned: "" });
       await fetchData();
@@ -60,6 +78,10 @@ const CaloriesTracking = () => {
     }
   };
 
+  const handleBack = () => {
+    router.push("/track_activity");
+  };
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -67,8 +89,16 @@ const CaloriesTracking = () => {
   return (
     <AuthGuard>
       <Navbar />
-      <div className="min-h-screen bg-gray-900 text-white p-6">
-        <h1 className="text-3xl font-bold mb-8">Calorie Tracking</h1>
+      <div className="min-h-screen bg-gray-900 text-white p-6 pt-20 md:pt-6">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold">Calorie Tracking</h1>
+          <button 
+            onClick={handleBack}
+            className="md:hidden bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded"
+          >
+            Back
+          </button>
+        </div>
         
         {error && (
           <div className="bg-red-600/20 border border-red-500 p-4 rounded mb-4">
@@ -76,23 +106,32 @@ const CaloriesTracking = () => {
           </div>
         )}
 
-        {loading ? (
-          <div className="animate-pulse bg-gray-800 rounded-lg h-96" />
-        ) : (
-          <MetricsCard
-            title="Calorie Balance"
-            subtitle="Daily Calorie Metrics"
-            description="Track your calorie intake and burn"
-            metrics={calorieMetrics}
-            primaryMetric="consumed"
-            secondaryMetric="burned"
-            unit="kcal"
-          />
-        )}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2">
+            {loading ? (
+              <div className="animate-pulse bg-gray-800 rounded-lg h-96" />
+            ) : (
+              <MetricsCard
+                title="Calorie Tracking"
+                subtitle="Daily Calorie Metrics"
+                description="Track your calorie intake and burn"
+                metrics={calorieMetrics}
+                primaryMetric="consumed"
+                secondaryMetric="burned"
+                unit="kcal"
+              />
+            )}
+          </div>
+          
+          <div className="hidden lg:block">
+            <h2 className="text-xl font-semibold mb-4">Other Tracking Options</h2>
+            <TrackingSections currentSection="calories" />
+          </div>
+        </div>
 
         <button
           onClick={() => setIsModalOpen(true)}
-          className="fixed bottom-6 right-6 bg-blue-600 p-4 rounded-full shadow-lg"
+          className="fixed bottom-6 right-6 bg-blue-600 p-4 rounded-full shadow-lg hover:bg-blue-700"
         >
           +
         </button>
@@ -108,7 +147,7 @@ const CaloriesTracking = () => {
                 required
                 value={formData.date}
                 onChange={e => setFormData(prev => ({ ...prev, date: e.target.value }))}
-                className="w-full p-2 rounded bg-gray-700"
+                className="w-full p-2 rounded bg-gray-700 text-white"
               />
             </div>
 
@@ -120,7 +159,7 @@ const CaloriesTracking = () => {
                 min="0"
                 value={formData.calories_consumed}
                 onChange={e => setFormData(prev => ({ ...prev, calories_consumed: e.target.value }))}
-                className="w-full p-2 rounded bg-gray-700"
+                className="w-full p-2 rounded bg-gray-700 text-white"
               />
             </div>
 
@@ -132,7 +171,7 @@ const CaloriesTracking = () => {
                 min="0"
                 value={formData.calories_burned}
                 onChange={e => setFormData(prev => ({ ...prev, calories_burned: e.target.value }))}
-                className="w-full p-2 rounded bg-gray-700"
+                className="w-full p-2 rounded bg-gray-700 text-white"
               />
             </div>
 
