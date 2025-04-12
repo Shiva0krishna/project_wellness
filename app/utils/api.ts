@@ -29,7 +29,7 @@ const sendMultipartRequest = async (endpoint: string, method: string, token: str
     Authorization: `Bearer ${token}`,
   };
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+  const response = await fetch(`${API_BASE_URL}/api${endpoint}`, {
     method,
     headers,
     body: formData,
@@ -114,20 +114,7 @@ export const addMessage = async (
 
 // Nutrition: Analyze food text for nutritional content
 export const analyzeNutritionText = async (token: string, foodText: string) => {
-  const response = await fetch(`${API_BASE_URL}/nutrition/analyze-text`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ foodText })
-  });
-
-  if (!response.ok) {
-    throw new Error(`Error: ${response.statusText}`);
-  }
-
-  return response.json();
+  return sendRequest("/nutrition/analyze-text", "POST", token, { foodText });
 };
 
 // Medical History: Fetch user's medical history
