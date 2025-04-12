@@ -169,11 +169,27 @@ const Navbar = () => {
             </Link>
             <Link
               href="/profile"
-              className="text-gray-400 hover:text-white transition-colors"
+              className="text-gray-400 hover:text-white transition-colors flex items-center gap-2"
               onClick={toggleMenu}
             >
+              <img
+                src={user?.user_metadata?.avatar_url || "/default-profile.png"}
+                alt="Profile"
+                className="w-6 h-6 rounded-full"
+              />
               Profile
             </Link>
+            {user && (
+              <button
+                onClick={async () => {
+                  await supabase.auth.signOut();
+                  window.location.reload();
+                }}
+                className="px-4 py-2 bg-red-500 rounded hover:bg-red-600 text-white"
+              >
+                Logout ({user.user_metadata?.full_name || "User"})
+              </button>
+            )}
           </div>
         </div>
       )}

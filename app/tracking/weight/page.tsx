@@ -49,6 +49,8 @@ const WeightTracking = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Form data:", formData);
+
     if (!formData.date || !formData.weight) {
       setError("Please fill in all fields");
       return;
@@ -58,16 +60,19 @@ const WeightTracking = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("No active session");
 
-      await addWeightData(session.access_token, {
+      const weightData = {
         date: formData.date,
         weight: parseFloat(formData.weight),
-      });
+      };
+      console.log("Submitting weight data:", weightData);
+
+      await addWeightData(session.access_token, weightData);
       setIsModalOpen(false);
       setFormData({ date: "", weight: "" });
       await fetchData();
     } catch (error) {
       setError("Failed to add weight data");
-      console.error(error);
+      console.error("Error submitting weight data:", error);
     }
   };
 

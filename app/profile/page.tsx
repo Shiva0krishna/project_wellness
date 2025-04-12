@@ -42,6 +42,8 @@ const ProfilePage = () => {
   useEffect(() => {
     const fetchData = async () => {
       const { data: { session } } = await supabase.auth.getSession();
+      console.log("Session:", session);
+      console.log("Access Token:", session?.access_token);
       if (session) {
         setUser(session.user);
         const profileData = await fetchUserProfile(session.access_token);

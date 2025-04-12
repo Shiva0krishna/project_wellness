@@ -8,15 +8,24 @@ const router = express.Router();
 router.post("/weight", authenticateUser, async (req, res) => {
   const { date, weight } = req.body;
   const userId = req.user.id;
+  
+  console.log("Received weight data:", { date, weight, userId });
+
+  if (!date || !weight) {
+    console.log("Missing required fields");
+    return res.status(400).json({ error: "Date and weight are required." });
+  }
 
   try {
     const { data, error } = await supabase
       .from("weight_tracking")
       .insert({ user_id: userId, date, weight });
 
+    console.log("Supabase response:", { data, error });
+
     if (error) {
       console.error("Error inserting weight data:", error);
-      return res.status(400).json({ error: "Failed to insert weight data." });
+      return res.status(400).json({ error: "Failed to insert weight data.", details: error });
     }
 
     res.status(201).json({ message: "Weight data added successfully.", data });
