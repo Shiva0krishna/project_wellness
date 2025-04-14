@@ -32,6 +32,61 @@ ChartJS.register(
   Legend
 );
 
+interface UserProfile {
+  id: string;
+  full_name: string;
+  email: string;
+  avatar_url?: string;
+  height?: number;
+  weight?: number;
+  age?: number;
+  gender?: string;
+  fitness_goal?: string;
+}
+
+interface WeightEntry {
+  id: string;
+  date: string;
+  weight: number;
+  notes?: string;
+}
+
+interface SleepEntry {
+  id: string;
+  date: string;
+  hours: number;
+  quality: 'poor' | 'fair' | 'good' | 'excellent';
+  notes?: string;
+}
+
+interface ActivityEntry {
+  id: string;
+  date: string;
+  activity_type: string;
+  duration_minutes: number;
+  intensity: string;
+  calories_burned: number;
+  description?: string;
+}
+
+interface TodayStats {
+  caloriesConsumed: number;
+  caloriesBurned: number;
+  sleepHours: number;
+  weight: number | null;
+  activities: ActivityEntry[];
+}
+
+interface CalorieData {
+  id: string;
+  user_id: string;
+  date: string;
+  calories_consumed: number;
+  calories_burned: number;
+  net_calories: number;
+  created_at: string;
+}
+
 const GrainOverlay = () => {
   return (
     <div className="fixed inset-0 w-full h-full z-0 pointer-events-none opacity-[0.15]">
@@ -57,15 +112,20 @@ const GrainOverlay = () => {
 const HomePage = () => {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [userProfile, setUserProfile] = useState<any>(null);
-  const [todayStats, setTodayStats] = useState({
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [weightData, setWeightData] = useState<WeightEntry[]>([]);
+  const [sleepData, setSleepData] = useState<SleepEntry[]>([]);
+  const [activityData, setActivityData] = useState<ActivityEntry[]>([]);
+  const [todayStats, setTodayStats] = useState<TodayStats>({
     caloriesConsumed: 0,
     caloriesBurned: 0,
     sleepHours: 0,
-    weight: 'Not logged',
-    activities: 0
+    weight: null,
+    activities: []
   });
+  const [recommendations, setRecommendations] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [calorieData, setCalorieData] = useState<CalorieData[]>([]);
   const router = useRouter();
 
   const fetchDashboardData = async () => {
@@ -109,11 +169,14 @@ const HomePage = () => {
       // Update today's stats
       setTodayStats({
         caloriesConsumed: todayCalories?.calories_consumed || 0,
-        caloriesBurned: todayCalories?.calories_burned || todayBurnedCalories || 0,
+        caloriesBurned: todayBurnedCalories,
         sleepHours: todaySleep?.hours || 0,
-        weight: todayWeight ? `${todayWeight.weight} kg` : 'Not logged',
-        activities: activityLogs.length || 0
+        weight: todayWeight?.weight || null,
+        activities: activityLogs
       });
+
+      // Set calorie data for the graph
+      setCalorieData(calorieData || []);
 
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -156,6 +219,69 @@ const HomePage = () => {
     };
   }, []);
 
+  // Prepare chart data for calorie tracking
+  const calorieChartData: ChartData<'line'> = {
+    labels: calorieData.map(data => {
+      const date = new Date(data.date);
+      return `${date.getMonth() + 1}/${date.getDate()}`;
+    }),
+    datasets: [
+      {
+        label: 'Calories Consumed',
+        data: calorieData.map(data => data.calories_consumed),
+        borderColor: 'rgb(244, 114, 182)', // pink-400
+        backgroundColor: 'rgba(244, 114, 182, 0.5)',
+        tension: 0.3,
+      },
+      {
+        label: 'Calories Burned',
+        data: calorieData.map(data => data.calories_burned),
+        borderColor: 'rgb(34, 197, 94)', // green-500
+        backgroundColor: 'rgba(34, 197, 94, 0.5)',
+        tension: 0.3,
+      }
+    ],
+  };
+
+  const calorieChartOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'top' as const,
+        labels: {
+          color: 'rgb(229, 231, 235)', // text-gray-200
+        },
+      },
+      title: {
+        display: true,
+        text: 'Calorie Tracking (Past 7 Days)',
+        color: 'rgb(229, 231, 235)', // text-gray-200
+        font: {
+          size: 16,
+        },
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        grid: {
+          color: 'rgba(75, 85, 99, 0.2)', // gray-600 with opacity
+        },
+        ticks: {
+          color: 'rgb(156, 163, 175)', // text-gray-400
+        },
+      },
+      x: {
+        grid: {
+          color: 'rgba(75, 85, 99, 0.2)', // gray-600 with opacity
+        },
+        ticks: {
+          color: 'rgb(156, 163, 175)', // text-gray-400
+        },
+      },
+    },
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
@@ -173,7 +299,7 @@ const HomePage = () => {
           <>
             <h1 className="text-3xl font-bold text-white mb-8">Dashboard</h1>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               {/* Calories Card */}
               <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
                 <h2 className="text-xl font-bold text-white mb-4">Calories</h2>
@@ -220,8 +346,40 @@ const HomePage = () => {
               {/* Activities Card */}
               <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
                 <h2 className="text-xl font-bold text-white mb-4">Activities</h2>
-                <p className="text-violet-400 text-2xl font-bold">{todayStats.activities}</p>
+                <p className="text-violet-400 text-2xl font-bold">{todayStats.activities.length}</p>
                 <p className="text-gray-400 text-sm">Today's Activities</p>
+              </div>
+            </div>
+
+            {/* Calorie Tracking Graph */}
+            <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50 mb-8">
+              <h2 className="text-2xl font-bold text-white mb-4">Calorie Tracking</h2>
+              <div className="h-80">
+                <Line data={calorieChartData} options={calorieChartOptions} />
+              </div>
+              <div className="mt-4 text-sm text-gray-400">
+                <p>This graph shows your calories consumed vs burned over the past 7 days.</p>
+                <p className="mt-2">
+                  Today's calories consumed: <span className="text-pink-400">{todayStats.caloriesConsumed.toLocaleString()} calories</span>
+                  <br />
+                  Today's calories burned: <span className="text-green-400">{todayStats.caloriesBurned.toLocaleString()} calories</span>
+                </p>
+              </div>
+            </div>
+
+            {/* Recommendations */}
+            <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
+              <h2 className="text-2xl font-bold text-white mb-4">Recommendations</h2>
+              <div className="space-y-4">
+                {recommendations.map((rec, index) => (
+                  <div
+                    key={index}
+                    className="flex items-start space-x-3 p-4 bg-gray-700/30 rounded-lg"
+                  >
+                    <span className="text-violet-400 text-xl">💡</span>
+                    <p className="text-gray-200">{rec}</p>
+                  </div>
+                ))}
               </div>
             </div>
           </>
