@@ -1,54 +1,85 @@
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 
   (process.env.NODE_ENV === 'production' 
-    ? 'https://project-wellness.onrender.com/api' 
-    : 'http://localhost:5000/api');
+    ? 'https://project-wellness.onrender.com' 
+    : 'http://localhost:5000');
 
 // Helper function to send API requests
-const sendRequest = async (endpoint: string, method: string, token: string, body?: any) => {
-  // console.log("Making API request to:", endpoint);
-  // console.log("With token:", token);
+const sendRequest = async (endpoint: string, method: string, token?: string, body?: any) => {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`,
   };
-  console.log("Request headers:", headers);
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    method,
-    headers,
-    credentials: 'include',
-    mode: 'cors',
-    body: body ? JSON.stringify(body) : undefined,
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Error: ${response.status} - ${errorText || response.statusText}`);
+  // Only add Authorization header if token is provided
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
   }
 
-  return response.json();
-};
+  // Ensure endpoint starts with /api
+  const apiEndpoint = endpoint.startsWith('/api') ? endpoint : `/api${endpoint}`;
 
+  try {
+    const response = await fetch(`${API_BASE_URL}${apiEndpoint}`, {
+      method,
+      headers,
+      credentials: 'include',
+      mode: 'cors',
+      body: body ? JSON.stringify(body) : undefined,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      if (response.status === 401) {
+        // Token is invalid or expired, redirect to login
+        window.location.href = '/login';
+        throw new Error('Session expired. Please log in again.');
+      }
+      throw new Error(`Error: ${response.status} - ${errorText || response.statusText}`);
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error(`API Error (${method} ${apiEndpoint}):`, error);
+    throw error;
+  }
+};
 
 // Helper function to send multipart form data requests (for file uploads)
 const sendMultipartRequest = async (endpoint: string, method: string, token: string, formData: FormData) => {
+  // Ensure we have a valid token
+  if (!token) {
+    throw new Error('No authentication token provided');
+  }
+
   const headers: Record<string, string> = {
     Authorization: `Bearer ${token}`,
   };
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    method,
-    headers,
-    mode: 'cors',
-    credentials: 'include',
-    body: formData,
-  });
+  // Ensure endpoint starts with /api
+  const apiEndpoint = endpoint.startsWith('/api') ? endpoint : `/api${endpoint}`;
 
-  if (!response.ok) {
-    throw new Error(`Error: ${response.statusText}`);
+  try {
+    const response = await fetch(`${API_BASE_URL}${apiEndpoint}`, {
+      method,
+      headers,
+      mode: 'cors',
+      credentials: 'include',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        // Token is invalid or expired, redirect to login
+        window.location.href = '/login';
+        throw new Error('Session expired. Please log in again.');
+      }
+      throw new Error(`Error: ${response.statusText}`);
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error(`API Error (${method} ${apiEndpoint}):`, error);
+    throw error;
   }
-
-  return response.json();
 };
 
 // Fetch user profile
@@ -191,5 +222,5 @@ export const deleteContext = async (token: string, contextName: string) => {
 
 // News: Fetch health news
 export const fetchHealthNews = async () => {
-  return sendRequest("/news/health", "GET", "");
+  return sendRequest("/news/health", "GET");
 };

@@ -32,7 +32,7 @@ router.post("/query", async (req, res) => {
     const { data: userProfile, error: profileError } = await supabase
       .from("users")
       .select("*")
-      .eq("user_id", userId)
+      .eq("id", userId)
       .single();
 
     if (profileError) console.error("Error fetching user profile:", profileError);
