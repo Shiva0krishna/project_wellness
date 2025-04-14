@@ -16,7 +16,8 @@ const sendRequest = async (endpoint: string, method: string, token: string, body
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     method,
     headers,
-    credentials: 'include', 
+    credentials: 'include',
+    mode: 'cors',
     body: body ? JSON.stringify(body) : undefined,
   });
 
@@ -38,6 +39,8 @@ const sendMultipartRequest = async (endpoint: string, method: string, token: str
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     method,
     headers,
+    mode: 'cors',
+    credentials: 'include',
     body: formData,
   });
 

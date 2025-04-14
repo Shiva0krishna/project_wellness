@@ -10,6 +10,7 @@ app.use(cors({
     
     const allowedOrigins = [
       process.env.FRONTEND_URL,
+      'https://project-wellness-beta.vercel.app',
       'https://project-wellness.vercel.app',
       'http://localhost:3000'
     ].filter(Boolean); // Remove any undefined values
