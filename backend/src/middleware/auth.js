@@ -1,60 +1,45 @@
 const supabase = require("../utils/db");
 
 const authenticateUser = async (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  console.log("Auth Header:", authHeader);
-
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    console.log("No token provided or invalid format");
-    return res.status(401).json({ error: "Unauthorized: No token provided." });
-  }
-
-  const token = authHeader.split(" ")[1];
-  console.log("Extracted token:", token);
-
   try {
-    console.log("Attempting to validate token with Supabase...");
-    const { data, error } = await supabase.auth.getUser(token);
-    console.log("Supabase auth response:", { data, error });
-
-    if (error || !data) {
-      return res.status(401).json({ error: "Unauthorized: Invalid token." });
-    }
-
-    const userId = data.user.id;
+    const authHeader = req.headers.authorization;
     
-    // Check if user exists in our users table
-    const { data: existingUser, error: userError } = await supabase
-      .from("users")
-      .select("*")
-      .eq("id", userId)
-      .single();
+    if (!authHeader) {
+      return res.status(401).json({ 
+        error: "Unauthorized: No authorization header",
+        details: "Please provide an authorization token"
+      });
+    }
+
+    const token = authHeader.split(' ')[1];
     
-    if (userError && userError.code !== "PGRST116") { // PGRST116 is "not found" error
-      console.error("Error checking user existence:", userError);
-      return res.status(500).json({ error: "Internal server error" });
+    if (!token) {
+      return res.status(401).json({ 
+        error: "Unauthorized: Invalid token format",
+        details: "Please provide a valid Bearer token"
+      });
     }
 
-    // If user doesn't exist, create them with minimal data
-    if (!existingUser) {
-      console.log("Creating new user record for:", userId);
-      const { error: insertError } = await supabase
-        .from("users")
-        .insert({
-          id: userId  // This matches the auth.users(id) reference
-        });
-
-      if (insertError) {
-        console.error("Error creating user record:", insertError);
-        return res.status(500).json({ error: "Failed to create user record" });
-      }
+    // Verify the token with Supabase
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    
+    if (error || !user) {
+      console.error("Token validation error:", error);
+      return res.status(401).json({ 
+        error: "Unauthorized: Invalid token",
+        details: error?.message || "The provided token is invalid or expired"
+      });
     }
 
-    req.user = data.user; // Attach user info to the request object
+    // Add the user to the request object
+    req.user = user;
     next();
   } catch (err) {
     console.error("Error validating token:", err);
-    res.status(500).json({ error: "Internal server error." });
+    res.status(500).json({ 
+      error: "Internal server error",
+      details: "An error occurred while validating your token"
+    });
   }
 };
 

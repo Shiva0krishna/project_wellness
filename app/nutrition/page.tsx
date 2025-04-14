@@ -14,6 +14,8 @@ interface NutritionResult {
   foodItems: string[];
   healthImpact?: string;
   recommendations?: string[];
+  estimate?: string;
+  note?: string;
 }
 
 interface NutritionLog {
@@ -89,7 +91,13 @@ const NutritionPage = () => {
       }
 
       const nutritionData = await analyzeNutritionText(session.access_token, foodText);
-      setResult(nutritionData.analysis);
+      
+      // Ensure we're handling the response correctly
+      if (nutritionData && nutritionData.analysis) {
+        setResult(nutritionData.analysis);
+      } else {
+        setError("Invalid response format from nutrition analysis");
+      }
     } catch (err: any) {
       console.error("Error analyzing food:", err);
       setError(err.message || "Failed to analyze food. Please try again.");
@@ -314,6 +322,20 @@ const NutritionPage = () => {
                   </div>
                 )}
 
+                {result.estimate && (
+                  <div className="mt-6 bg-gray-700 p-4 rounded-lg">
+                    <h3 className="text-lg font-medium mb-3">Estimate</h3>
+                    <p className="whitespace-pre-line">{result.estimate}</p>
+                  </div>
+                )}
+
+                {result.note && (
+                  <div className="mt-6 bg-gray-700 p-4 rounded-lg">
+                    <h3 className="text-lg font-medium mb-3">Note</h3>
+                    <p className="whitespace-pre-line">{result.note}</p>
+                  </div>
+                )}
+
                 <div className="mt-6">
                   <div className="bg-blue-900 bg-opacity-30 p-4 rounded-lg">
                     <p className="text-sm">
@@ -329,13 +351,23 @@ const NutritionPage = () => {
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
-                      <label className="block text-sm font-medium mb-1">Date</label>
-                      <input
-                        type="date"
-                        value={selectedDate}
-                        onChange={(e) => setSelectedDate(e.target.value)}
-                        className="w-full p-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
+                      <label className="block text-sm font-medium mb-1">Date (Optional)</label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="date"
+                          value={selectedDate}
+                          onChange={(e) => setSelectedDate(e.target.value)}
+                          className="w-full p-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <button
+                          onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])}
+                          className="px-3 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg text-sm"
+                          title="Set to today"
+                        >
+                          Today
+                        </button>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-1">Defaults to today if not changed</p>
                     </div>
                     
                     <div>

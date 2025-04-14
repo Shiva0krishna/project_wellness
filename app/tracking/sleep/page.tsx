@@ -24,7 +24,7 @@ const SleepTracking = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [formData, setFormData] = useState({ 
-    date: "", 
+    date: new Date().toISOString().split('T')[0], 
     sleep_duration: "", 
     sleep_quality: "" 
   });
@@ -141,14 +141,24 @@ const SleepTracking = () => {
             <h2 className="text-xl font-bold mb-4">Add Sleep Data</h2>
             
             <div>
-              <label className="block text-sm font-medium mb-1">Date</label>
-              <input
-                type="date"
-                required
-                value={formData.date}
-                onChange={e => setFormData(prev => ({ ...prev, date: e.target.value }))}
-                className="w-full p-2 rounded bg-gray-700 text-white"
-              />
+              <label className="block text-sm font-medium mb-1">Date (Optional)</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="date"
+                  required
+                  value={formData.date}
+                  onChange={e => setFormData(prev => ({ ...prev, date: e.target.value }))}
+                  className="w-full p-2 rounded bg-gray-700 text-white"
+                />
+                <button
+                  onClick={() => setFormData(prev => ({ ...prev, date: new Date().toISOString().split('T')[0] }))}
+                  className="px-3 py-2 bg-gray-600 hover:bg-gray-700 rounded text-sm"
+                  title="Set to today"
+                >
+                  Today
+                </button>
+              </div>
+              <p className="text-xs text-gray-400 mt-1">Defaults to today if not changed</p>
             </div>
 
             <div>

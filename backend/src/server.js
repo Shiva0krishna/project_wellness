@@ -4,16 +4,22 @@ require('dotenv').config();
 
 const app = express();
 
-// Strip trailing slash from FRONTEND_URL if present
-const allowedOrigin = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.replace(/\/$/, '') : '';
-
-// CORS configuration using cors package
 app.use(cors({
   origin: function(origin, callback) {
-    console.log('Request from origin:', origin);
-    // Allow the actual origin regardless of what's in env file
-    // This dynamically handles the origin without trailing slash issues
-    callback(null, origin);
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      process.env.FRONTEND_URL,
+      'https://project-wellness.vercel.app',
+      'http://localhost:3000'
+    ].filter(Boolean); // Remove any undefined values
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.log('Blocked request from origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
   },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],

@@ -1,4 +1,7 @@
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 
+  (process.env.NODE_ENV === 'production' 
+    ? 'https://project-wellness.onrender.com/api' 
+    : 'http://localhost:5000/api');
 
 // Helper function to send API requests
 const sendRequest = async (endpoint: string, method: string, token: string, body?: any) => {
@@ -10,7 +13,7 @@ const sendRequest = async (endpoint: string, method: string, token: string, body
   };
   console.log("Request headers:", headers);
 
-  const response = await fetch(`${API_BASE_URL}/api${endpoint}`, {
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     method,
     headers,
     credentials: 'include', 
@@ -32,7 +35,7 @@ const sendMultipartRequest = async (endpoint: string, method: string, token: str
     Authorization: `Bearer ${token}`,
   };
 
-  const response = await fetch(`${API_BASE_URL}/api${endpoint}`, {
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     method,
     headers,
     body: formData,
