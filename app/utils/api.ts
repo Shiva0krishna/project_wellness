@@ -29,8 +29,7 @@ const sendRequest = async (endpoint: string, method: string, token?: string, bod
     if (!response.ok) {
       const errorText = await response.text();
       if (response.status === 401) {
-        // Token is invalid or expired, redirect to login
-        window.location.href = '/login';
+        // Instead of redirecting, throw an error that can be handled by the component
         throw new Error('Session expired. Please log in again.');
       }
       throw new Error(`Error: ${response.status} - ${errorText || response.statusText}`);
@@ -111,6 +110,11 @@ export const fetchCalorieData = async (token: string) => {
 // Add calorie tracking data
 export const addCalorieData = async (token: string, calorieData: any) => {
   return sendRequest("/tracking/calories", "POST", token, calorieData);
+};
+
+// Update calorie tracking data
+export const updateCalorieData = async (token: string, date: string, calorieData: any) => {
+  return sendRequest(`/tracking/calories/${date}`, "PUT", token, calorieData);
 };
 
 // Fetch sleep tracking data
@@ -223,4 +227,57 @@ export const deleteContext = async (token: string, contextName: string) => {
 // News: Fetch health news
 export const fetchHealthNews = async () => {
   return sendRequest("/news/health", "GET");
+};
+
+// Fetch nutrition data
+export const fetchNutritionData = async (token?: string) => {
+  try {
+    if (token) {
+      return sendRequest("/tracking/nutrition", "GET", token);
+    } else {
+      const response = await fetch('/api/tracking/nutrition');
+      if (!response.ok) throw new Error('Failed to fetch nutrition data');
+      return await response.json();
+    }
+  } catch (error) {
+    console.error('Error fetching nutrition data:', error);
+    return [];
+  }
+};
+
+// Activity Tracking
+export const logActivity = async (token: string, activityData: {
+  date: string;
+  activity_type: string;
+  duration_minutes: number;
+  intensity: string;
+  description?: string;
+  calories_burned?: number;
+}) => {
+  console.log("API: Sending activity data to backend:", activityData);
+  return sendRequest("/tracking/activity", "POST", token, activityData);
+};
+
+export const fetchActivityData = async (token: string, startDate?: string, endDate?: string) => {
+  let endpoint = "/tracking/activity";
+  if (startDate && endDate) {
+    endpoint += `?startDate=${startDate}&endDate=${endDate}`;
+  }
+  return sendRequest(endpoint, "GET", token);
+};
+
+export const fetchDailyActivitySummary = async (token: string, date: string) => {
+  return sendRequest(`/tracking/activity/summary?date=${date}`, "GET", token);
+};
+
+export const fetchActivitySummary = async (token: string, startDate?: string, endDate?: string) => {
+  let endpoint = "/tracking/activity/summary";
+  if (startDate && endDate) {
+    endpoint += `?startDate=${startDate}&endDate=${endDate}`;
+  } else if (startDate) {
+    endpoint += `?startDate=${startDate}`;
+  } else if (endDate) {
+    endpoint += `?endDate=${endDate}`;
+  }
+  return sendRequest(endpoint, "GET", token);
 };

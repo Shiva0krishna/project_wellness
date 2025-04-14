@@ -44,6 +44,15 @@ const TrackActivity = () => {
             <p className="text-gray-400 mt-2 text-sm">Track and analyze your sleep patterns.</p>
           </div>
 
+          {/* Activity Tracking Section */}
+          <div
+            className="bg-gray-700 p-4 rounded-lg shadow-lg text-center cursor-pointer hover:bg-gray-600 transition"
+            onClick={() => handleNavigation("/tracking/activity")}
+          >
+            <h2 className="text-xl font-semibold">Activity Tracking</h2>
+            <p className="text-gray-400 mt-2 text-sm">Log and monitor your physical activities and exercise.</p>
+          </div>
+
           {/* Get Assistant Section */}
           <div
             className="bg-gray-700 p-4 rounded-lg shadow-lg text-center cursor-pointer hover:bg-gray-600 transition"

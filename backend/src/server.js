@@ -33,7 +33,7 @@ app.options('*', cors());
 app.use(express.json());
 
 app.get('/', (req, res) => {
-  res.send('API is running! 💡');
+  res.send('Server is running! 💡');
 });
 
 // Routes
