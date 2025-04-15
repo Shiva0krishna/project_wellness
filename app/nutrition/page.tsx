@@ -20,14 +20,43 @@ interface NutritionResult {
 interface NutritionLog {
   id: string;
   date: string;
-  meal: 'Breakfast' | 'Lunch' | 'Dinner' | 'Snack';
-  food_items: string[];
-  total_calories: number;
+  meal?: 'Breakfast' | 'Lunch' | 'Dinner' | 'Snack';
+  food_items?: string[];
+  total_calories?: number;
   protein_grams?: number;
   carbs_grams?: number;
   fat_grams?: number;
   fiber_grams?: number;
   created_at: string;
+  analysis?: {
+    calories: {
+      estimate: number;
+      note: string;
+    };
+    protein?: {
+      estimate: number;
+      unit: string;
+      note: string;
+    };
+    carbohydrates?: {
+      estimate: number;
+      unit: string;
+      note: string;
+    };
+    fats?: {
+      estimate: number;
+      unit: string;
+      note: string;
+    };
+    fiber?: {
+      estimate: number;
+      unit: string;
+      note: string;
+    };
+    foodItems?: string[];
+    healthImpact?: string;
+    recommendations?: string[];
+  };
 }
 
 const NutritionPage = () => {
@@ -136,45 +165,66 @@ const NutritionPage = () => {
   };
 
   const logNutritionData = async () => {
-    if (!result) {
-      setError("Please analyze food items first");
-      return;
-    }
-
-    setIsLogging(true);
-    setError(null);
-
     try {
+      setIsLogging(true);
+      setError("");
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        setError("You must be logged in to log nutrition data");
-        setIsLogging(false);
-        return;
-      }
+      if (!session) throw new Error("No active session");
 
-      await logNutrition(session.access_token, {
+      // Create the nutrition data object
+      const nutritionData: any = {
         date: selectedDate,
         meal: selectedMeal,
-        food_items: result.foodItems,
-        total_calories: result.calories,
-        protein_grams: result.protein,
-        carbs_grams: result.carbohydrates,
-        fat_grams: result.fats,
-        fiber_grams: result.fiber
-      });
+        food_items: result?.foodItems,
+        total_calories: result?.calories,
+        protein_grams: result?.protein,
+        carbs_grams: result?.carbohydrates,
+        fat_grams: result?.fats,
+        fiber_grams: result?.fiber
+      };
 
-      // Refresh logs
-      fetchUserLogs();
-      
-      // Reset form
+      // Add analysis data if available
+      if (result) {
+        nutritionData.analysis = {
+          calories: {
+            estimate: result.calories,
+            note: "Calorie estimate based on food items"
+          },
+          protein: {
+            estimate: result.protein,
+            unit: "grams",
+            note: "Protein content estimate"
+          },
+          carbohydrates: {
+            estimate: result.carbohydrates,
+            unit: "grams",
+            note: "Carbohydrate content estimate"
+          },
+          fats: {
+            estimate: result.fats,
+            unit: "grams",
+            note: "Fat content estimate"
+          },
+          fiber: {
+            estimate: result.fiber,
+            unit: "grams",
+            note: "Fiber content estimate"
+          },
+          foodItems: result.foodItems,
+          healthImpact: result.healthImpact,
+          recommendations: result.recommendations
+        };
+      }
+
+      await logNutrition(session.access_token, nutritionData);
+      await fetchUserLogs();
       setFoodText("");
       setResult(null);
       setAnimatedHealthImpact("");
       setVisibleRecommendations([]);
-      
-    } catch (err: any) {
-      console.error("Error logging nutrition data:", err);
-      setError(err.message || "Failed to log nutrition data. Please try again.");
+    } catch (error) {
+      console.error("Error logging nutrition data:", error);
+      setError("Failed to log nutrition data. Please try again.");
     } finally {
       setIsLogging(false);
     }
@@ -483,10 +533,14 @@ const NutritionPage = () => {
                         {nutritionLogs.map(log => (
                           <tr key={log.id} className="hover:bg-zinc-800">
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{log.date}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{log.meal}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{log.total_calories} cal</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{log.meal || 'Not specified'}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                              {log.analysis?.calories?.estimate || log.total_calories || 0} cal
+                            </td>
                             <td className="px-6 py-4 text-sm text-gray-300">
-                              <div className="max-w-xs truncate">{log.food_items.join(", ")}</div>
+                              <div className="max-w-xs truncate">
+                                {log.analysis?.foodItems?.join(", ") || (log.food_items && log.food_items.join(", ")) || 'No food items listed'}
+                              </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                               <button

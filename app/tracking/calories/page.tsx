@@ -59,7 +59,13 @@ const CaloriesTracking = () => {
           const logDate = new Date(log.date).toISOString().split('T')[0];
           return logDate === today;
         })
-        .reduce((sum: number, log: any) => sum + (parseInt(log.total_calories) || 0), 0);
+        .reduce((sum: number, log: any) => {
+          // Handle both direct calories and analysis structure
+          if (log.analysis && log.analysis.calories) {
+            return sum + (parseInt(log.analysis.calories.estimate) || 0);
+          }
+          return sum + (parseInt(log.total_calories) || 0);
+        }, 0);
 
       // Fetch activity data for today
       const activityLogs = await fetchActivityData(session.access_token, today, today);

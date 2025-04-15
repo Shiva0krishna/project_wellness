@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Navbar from "./components/navbar";
 import { supabase } from "./utils/supabaseClient";
-import { fetchUserProfile, fetchWeightData, fetchSleepData, fetchActivityData, fetchCalorieData } from "./utils/api";
+import { fetchUserProfile, fetchWeightData, fetchSleepData, fetchActivityData, fetchCalorieData, fetchActivitySummary, fetchMedicalHistory } from "./utils/api";
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -87,6 +87,15 @@ interface CalorieData {
   created_at: string;
 }
 
+interface ActivitySummary {
+  user_id: string;
+  date: string;
+  total_activities: number;
+  total_duration: number;
+  total_calories_burned: number;
+  activities_performed: ActivityEntry[];
+}
+
 const GrainOverlay = () => {
   return (
     <div className="fixed inset-0 w-full h-full z-0 pointer-events-none opacity-[0.15]">
@@ -126,6 +135,8 @@ const HomePage = () => {
   const [recommendations, setRecommendations] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [calorieData, setCalorieData] = useState<CalorieData[]>([]);
+  const [activitySummary, setActivitySummary] = useState<ActivitySummary | null>(null);
+  const [medicalHistory, setMedicalHistory] = useState<any[]>([]);
   const router = useRouter();
 
   const fetchDashboardData = async () => {
@@ -186,6 +197,38 @@ const HomePage = () => {
     }
   };
 
+  const fetchAdditionalData = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const today = new Date().toISOString().split('T')[0];
+      const summary = await fetchActivitySummary(session.access_token, today, today);
+      if (Array.isArray(summary) && summary.length > 0) {
+        setActivitySummary(summary[0]);
+      } else {
+        setActivitySummary({
+          user_id: '',
+          date: '',
+          total_activities: 0,
+          total_duration: 0,
+          total_calories_burned: 0,
+          activities_performed: []
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching activity summary:', error);
+      setActivitySummary({
+        user_id: '',
+        date: '',
+        total_activities: 0,
+        total_duration: 0,
+        total_calories_burned: 0,
+        activities_performed: []
+      });
+    }
+  };
+
   useEffect(() => {
     const checkUser = async () => {
       try {
@@ -194,6 +237,7 @@ const HomePage = () => {
         
         if (session?.user) {
           await fetchDashboardData();
+          await fetchAdditionalData();
         }
       } catch (error) {
         console.error("Error checking auth status:", error);
@@ -210,6 +254,7 @@ const HomePage = () => {
         setUser(session?.user || null);
         if (session?.user) {
           await fetchDashboardData();
+          await fetchAdditionalData();
         }
       }
     );
@@ -284,8 +329,23 @@ const HomePage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-violet-500"></div>
+      <div className="min-h-screen bg-zinc-950 text-white p-4">
+        <Navbar/>
+        <div className="grid m-10 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="bg-zinc-900 p-3 rounded-lg shadow-md animate-pulse">
+              <div className="h-10 bg-zinc-800 rounded w-1/3 mb-4"></div>
+              <div className="h-6 bg-zinc-800 rounded w-1/2 mb-2"></div>
+              <div className="h-6 bg-zinc-800 rounded w-1/3"></div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-10 bg-zinc-900 p-2 rounded-lg shadow-md animate-pulse">
+          <div className="h-6 bg-zinc-800 rounded w-1/3 mb-10"></div>
+          <div className="h-64 bg-zinc-800 rounded"></div>
+        </div>
+        <Footer/>
       </div>
     );
   }
@@ -298,7 +358,7 @@ const HomePage = () => {
         {user ? (
           <>
             <h1 className="text-3xl font-bold text-white mb-8">Dashboard</h1>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               {/* Calories Card */}
               <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
@@ -367,8 +427,42 @@ const HomePage = () => {
               </div>
             </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
+                <h2 className="text-xl font-bold text-white mb-4">Activity Summary</h2>
+                {activitySummary ? (
+                  <div>
+                    <p className="text-violet-400 text-2xl font-bold">{activitySummary.total_activities}</p>
+                    <p className="text-gray-400 text-sm">Total Activities</p>
+                    <p className="text-violet-400 text-2xl font-bold">{activitySummary.total_calories_burned}</p>
+                    <p className="text-gray-400 text-sm">Total Calories Burned</p>
+                  </div>
+                ) : (
+                  <p className="text-gray-400">Loading activity summary...</p>
+                )}
+              </div>
+
+              <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
+                <h2 className="text-xl font-bold text-white mb-4">Medical Information</h2>
+                {medicalHistory.length > 0 ? (
+                  <ul>
+                    {medicalHistory.map((record, index) => (
+                      <li key={index} className="mb-2">
+                        <strong>Condition:</strong> {record.condition} <br />
+                        <strong>Diagnosis Date:</strong> {record.diagnosis_date} <br />
+                        {record.treatment && <><strong>Treatment:</strong> {record.treatment} <br /></>}
+                        {record.medications && <><strong>Medications:</strong> {record.medications}</>}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-gray-400">No medical history available.</p>
+                )}
+              </div>
+            </div>
+
             {/* Recommendations */}
-            <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
+            <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50 mt-8">
               <h2 className="text-2xl font-bold text-white mb-4">Recommendations</h2>
               <div className="space-y-4">
                 {recommendations.map((rec, index) => (

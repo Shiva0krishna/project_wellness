@@ -194,13 +194,42 @@ export const deleteMedicalCondition = async (token: string, id: string) => {
 // Nutrition: Log a meal with nutrition data
 export const logNutrition = async (token: string, nutritionData: {
   date: string;
-  meal: 'Breakfast' | 'Lunch' | 'Dinner' | 'Snack';
-  food_items: string[];
-  total_calories: number;
+  meal?: 'Breakfast' | 'Lunch' | 'Dinner' | 'Snack';
+  food_items?: string[];
+  total_calories?: number;
   protein_grams?: number;
   carbs_grams?: number;
   fat_grams?: number;
   fiber_grams?: number;
+  analysis?: {
+    calories: {
+      estimate: number;
+      note: string;
+    };
+    protein?: {
+      estimate: number;
+      unit: string;
+      note: string;
+    };
+    carbohydrates?: {
+      estimate: number;
+      unit: string;
+      note: string;
+    };
+    fats?: {
+      estimate: number;
+      unit: string;
+      note: string;
+    };
+    fiber?: {
+      estimate: number;
+      unit: string;
+      note: string;
+    };
+    foodItems?: string[];
+    healthImpact?: string;
+    recommendations?: string[];
+  };
 }) => {
   return sendRequest("/nutrition/log", "POST", token, nutritionData);
 };
