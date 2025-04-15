@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Navbar from "./components/navbar";
 import { supabase } from "./utils/supabaseClient";
-import { fetchUserProfile, fetchWeightData, fetchSleepData, fetchActivityData, fetchCalorieData, fetchActivitySummary, fetchMedicalHistory } from "./utils/api";
+import { fetchUserProfile, fetchWeightData, fetchSleepData, fetchActivityData, fetchCalorieData, fetchActivitySummary, fetchMedicalHistory, sendGeminiQuery } from "./utils/api";
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -202,30 +202,23 @@ const HomePage = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const today = new Date().toISOString().split('T')[0];
-      const summary = await fetchActivitySummary(session.access_token, today, today);
-      if (Array.isArray(summary) && summary.length > 0) {
-        setActivitySummary(summary[0]);
-      } else {
-        setActivitySummary({
-          user_id: '',
-          date: '',
-          total_activities: 0,
-          total_duration: 0,
-          total_calories_burned: 0,
-          activities_performed: []
-        });
-      }
+      const medicalHistoryData = await fetchMedicalHistory(session.access_token);
+      setMedicalHistory(medicalHistoryData);
     } catch (error) {
-      console.error('Error fetching activity summary:', error);
-      setActivitySummary({
-        user_id: '',
-        date: '',
-        total_activities: 0,
-        total_duration: 0,
-        total_calories_burned: 0,
-        activities_performed: []
-      });
+      console.error('Error fetching medical history:', error);
+    }
+  };
+
+  const fetchRecommendations = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('User not logged in');
+
+      const response = await sendGeminiQuery(session.access_token, 'recommendations', 'Provide personal recommendations for the user.');
+      const recommendationsArray = response.split('\n').filter((rec: string) => rec.trim() !== '');
+      setRecommendations(recommendationsArray);
+    } catch (err) {
+      console.error('Error fetching recommendations:', err);
     }
   };
 
@@ -238,6 +231,7 @@ const HomePage = () => {
         if (session?.user) {
           await fetchDashboardData();
           await fetchAdditionalData();
+          await fetchRecommendations();
         }
       } catch (error) {
         console.error("Error checking auth status:", error);
@@ -255,6 +249,7 @@ const HomePage = () => {
         if (session?.user) {
           await fetchDashboardData();
           await fetchAdditionalData();
+          await fetchRecommendations();
         }
       }
     );

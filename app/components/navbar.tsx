@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import Link from "next/link"; // Import Link from Next.js
-import { Menu, X } from "lucide-react";
+import { Menu, X, Bell } from "lucide-react";
 import { supabase } from "../utils/supabaseClient";
 
 const Navbar = () => {
@@ -82,6 +82,13 @@ const Navbar = () => {
               Browse
               <span className="absolute -bottom-1 left-0 w-full h-px bg-violet-400 transform scale-x-0 transition-transform duration-300 origin-left group-hover:scale-x-100" />
             </span>
+          </Link>
+          <Link
+            href="/notifications"
+            className="group flex items-center gap-2 text-gray-400 hover:text-white transition-colors relative"
+          >
+            <Bell className="w-5 h-5" />
+            <span className="absolute -bottom-1 left-0 w-full h-px bg-violet-400 transform scale-x-0 transition-transform duration-300 origin-left group-hover:scale-x-100" />
           </Link>
           <Link
             href="/profile"
@@ -166,6 +173,13 @@ const Navbar = () => {
               onClick={toggleMenu}
             >
               Browse
+            </Link>
+            <Link
+              href="/notifications"
+              className="text-gray-400 hover:text-white transition-colors"
+              onClick={toggleMenu}
+            >
+              Notifications
             </Link>
             <Link
               href="/profile"

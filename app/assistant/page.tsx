@@ -57,6 +57,33 @@ const AnimatedText = ({ text, isTyping }: { text: string; isTyping: boolean }) =
   );
 };
 
+const ContextCard = ({ context, isSelected, onSelect, onDelete }: { context: Context; isSelected: boolean; onSelect: () => void; onDelete: (e: React.MouseEvent) => void }) => (
+  <div
+    className={`p-4 rounded-lg shadow-lg cursor-pointer transition transform hover:scale-105 ${
+      isSelected ? "bg-blue-700" : "bg-gray-800"
+    }`}
+    onClick={onSelect}
+  >
+    <div className="flex justify-between items-center">
+      <div className="flex items-center">
+        <svg className="w-6 h-6 text-violet-400 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+        </svg>
+        <span className="text-lg font-semibold">{context.name}</span>
+      </div>
+      <button
+        onClick={onDelete}
+        className="text-red-500 hover:text-red-700 p-1"
+        title="Delete context"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+          <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+        </svg>
+      </button>
+    </div>
+  </div>
+);
+
 const Assistant = () => {
   const [contexts, setContexts] = useState<Context[]>([]);
   const [selectedContext, setSelectedContext] = useState<Context | null>(null);
@@ -284,43 +311,16 @@ const Assistant = () => {
         <div className="flex h-[calc(100vh-64px)]">
           {/* Sidebar */}
           <div
-            className={`w-full md:w-1/4 bg-gray-800 p-4 border-r border-gray-700 md:block ${
+            className={`w-full md:w-1/4 bg-gray-800 p-4 border-r border-gray-700 md:block flex flex-col-reverse md:flex-col overflow-hidden ${
               showChat ? "hidden md:block" : "block"
             }`}
           >
-            <h2 className="text-xl font-semibold mb-4">Your Topics</h2>
-            <div className="space-y-2 overflow-y-auto max-h-[60vh]">
-              {contexts.map((ctx) => (
-                <div
-                  key={ctx.id}
-                  className={`p-3 rounded-lg cursor-pointer hover:bg-gray-700 ${
-                    selectedContext?.id === ctx.id ? "bg-gray-700" : "bg-gray-800"
-                  }`}
-                  onClick={() => handleContextSelect(ctx)}
-                >
-                  <div className="flex justify-between items-center">
-                    <span>{ctx.name}</span>
-                    <button
-                      onClick={(e) => handleDeleteContext(ctx, e)}
-                      className="text-red-500 hover:text-red-700 p-1"
-                      title="Delete context"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Create new context */}
             <form
               onSubmit={(e) => {
                 e.preventDefault();
                 createContext();
               }}
-              className="mt-6"
+              className="mt-6 md:mt-0"
             >
               <input
                 type="text"
@@ -333,6 +333,18 @@ const Assistant = () => {
                 Create
               </button>
             </form>
+
+            <div className="space-y-2 overflow-y-auto max-h-[60vh]">
+              {contexts.map((ctx) => (
+                <ContextCard
+                  key={ctx.id}
+                  context={ctx}
+                  isSelected={selectedContext?.id === ctx.id}
+                  onSelect={() => handleContextSelect(ctx)}
+                  onDelete={(e) => handleDeleteContext(ctx, e)}
+                />
+              ))}
+            </div>
           </div>
 
           {/* Chat Window */}
@@ -376,22 +388,18 @@ const Assistant = () => {
                             : "bg-gray-700 text-gray-100"
                         }`}
                       >
-                        {msg.sender === "assistant" ? (
-                          <AnimatedText 
-                            text={msg.text} 
-                            isTyping={msg.isTyping || false} 
-                          />
-                        ) : (
-                          <div className="prose prose-invert max-w-none">
-                            <ReactMarkdown>{msg.text}</ReactMarkdown>
-                          </div>
-                        )}
+                        <div className="prose prose-invert max-w-none">
+                          <ReactMarkdown>{msg.text}</ReactMarkdown>
+                        </div>
+                        <div className="text-xs text-gray-400 mt-1">
+                          {new Date(msg.timestamp).toLocaleString()}
+                        </div>
                       </div>
                     </div>
                   ))}
                   {isLoading && (
                     <div className="flex justify-start">
-                      <div className="bg-gray-700 text-gray-100 p-3 rounded-lg">
+                      <div className="bg-gray-700 text-gray-100 p-3 rounded-lg animate-pulse">
                         <div className="flex space-x-2">
                           <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></div>
                           <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></div>
